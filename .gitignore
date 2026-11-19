@@ -1,0 +1,11 @@
+# 自动更新运行日志
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
