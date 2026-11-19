@@ -423,6 +423,97 @@
   }
   .verdict b{color:var(--gold)}
 
+  /* 四策略回测对比 */
+  .bt-current{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--gold);
+    margin:-6px 0 14px;
+  }
+  .bt-compare{border:1px solid var(--line);border-top:0;background:var(--bg-2);padding:22px 28px 20px}
+  .bt-compare-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    flex-wrap:wrap;margin-bottom:12px;
+  }
+  .bt-compare-head h4{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;color:var(--dim);
+    text-transform:uppercase;font-weight:500;
+  }
+  .bt-compare-head span{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.06em}
+  .bt-scroll{overflow-x:auto;border-top:1px solid var(--line)}
+  .bt-table{
+    width:100%;min-width:820px;border-collapse:collapse;font-family:var(--mono);
+    font-size:10.5px;color:var(--paper-dim);
+  }
+  .bt-table th{
+    padding:11px 12px;text-align:left;font-size:9px;font-weight:500;letter-spacing:.14em;
+    color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  .bt-table td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}
+  .bt-table tbody tr[data-k]{cursor:pointer;transition:background .15s}
+  .bt-table tbody tr[data-k]:hover{background:rgba(255,255,255,.025)}
+  .bt-table tbody tr.on{background:rgba(200,22,30,.08)}
+  .bt-table tbody tr.on td:first-child{box-shadow:inset 2px 0 0 var(--red-lit)}
+  .bt-table .nm{font-family:var(--sans);font-size:12.5px;color:var(--paper);letter-spacing:.02em}
+  .bt-table .ci{font-size:9.5px;color:var(--dim);margin-top:3px;letter-spacing:0}
+  .bt-table .warn{color:var(--gold)}
+  .bt-table .sig-above{color:var(--gold)}
+  .bt-table .sig-below{color:var(--red-lit)}
+  .bt-table .sig-flat{color:var(--muted)}
+  .bt-empty{text-align:center;color:var(--dim);padding:22px 12px !important}
+  .bt-foot{margin-top:12px;font-size:10px;color:var(--dim);line-height:1.8}
+  .bt-foot b{color:var(--muted);font-weight:500}
+
+  /* 自进化预测 */
+  .evo-panel{border:1px solid var(--line);background:var(--bg-2)}
+  .evo-top{display:grid;grid-template-columns:1.45fr .55fr;gap:1px;background:var(--line)}
+  .evo-next{background:var(--bg-2);padding:26px 28px;min-width:0}
+  .evo-run{
+    background:var(--bg-2);padding:26px 28px;display:flex;flex-direction:column;
+    justify-content:center;gap:13px;min-width:0;
+  }
+  .evo-label{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;color:var(--dim);
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .evo-issue{
+    font-family:var(--mono);font-size:clamp(22px,2.6vw,30px);color:var(--paper);
+    letter-spacing:.06em;line-height:1.2;
+  }
+  .evo-issue small{font-size:11px;color:var(--dim);letter-spacing:.1em;margin-left:8px}
+  .evo-balls{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;align-items:center;min-height:44px}
+  .evo-balls .ball{--s:44px;font-size:15px}
+  .evo-balls .empty{font-size:11.5px;color:var(--dim);line-height:1.7}
+  .evo-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+  .evo-actions .btn{padding:8px 14px;font-size:11px;letter-spacing:.06em}
+  .evo-run .btn{width:100%;padding:12px 16px;font-size:12.5px}
+  .evo-progress{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.7;letter-spacing:.03em}
+  .evo-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}
+  .evo-metric{background:var(--bg-2);padding:18px 20px;min-width:0}
+  .evo-metric .k{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .evo-metric .v{font-family:var(--mono);font-size:23px;color:var(--paper);margin-top:6px;line-height:1.1}
+  .evo-metric .s{font-size:10px;color:var(--dim);margin-top:5px;line-height:1.5}
+  .evo-chart-box{border-top:1px solid var(--line);padding:20px 28px}
+  .evo-chart-head{
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim);
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .evo-chart-head span{color:var(--muted);letter-spacing:.03em;text-transform:none}
+  .evo-chart{height:170px;background:rgba(255,255,255,.012);border:1px solid var(--line)}
+  .evo-chart svg{display:block;width:100%;height:100%}
+  .evo-weights-box{border-top:1px solid var(--line);padding:20px 28px}
+  .evo-weights{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .evo-wcol{min-width:0}
+  .evo-wtitle{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--muted);margin-bottom:10px}
+  .evo-wrow{
+    display:grid;grid-template-columns:54px 1fr 48px;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:7px;
+  }
+  .evo-wbar{height:6px;background:rgba(255,255,255,.04);position:relative;overflow:hidden}
+  .evo-wbar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--red-lit));width:0;transition:width .6s}
+  .evo-wrow b{text-align:right;color:var(--paper-dim);font-weight:500}
+  .evo-note{padding:0 28px 22px;font-size:10.5px;color:var(--dim);line-height:1.8}
+  .evo-note b{color:var(--muted);font-weight:500}
+
   /* ───────── 验票机 ───────── */
   .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
   .check-cell{background:var(--bg-2);padding:26px 28px;min-width:0}
@@ -581,6 +672,9 @@
     .grid-16{grid-template-columns:repeat(8,1fr)}
     .lab-grid{grid-template-columns:1fr}
     .check-grid{grid-template-columns:1fr}
+    .evo-top{grid-template-columns:1fr}
+    .evo-metrics{grid-template-columns:repeat(2,1fr)}
+    .evo-weights{grid-template-columns:1fr}
   }
   @media (max-width:760px){
     .block-head{flex-wrap:wrap;row-gap:5px}
@@ -594,6 +688,13 @@
     .facts dd{font-size:16px}
     .grid-33{grid-template-columns:repeat(6,1fr)}
     .check-cell{padding:22px 16px}
+    .bt-compare{padding:18px 16px 16px}
+    .evo-next,.evo-run,.evo-chart-box,.evo-weights-box{padding-left:16px;padding-right:16px}
+    .evo-note{padding-left:16px;padding-right:16px}
+    .evo-metric{padding:16px}
+    .evo-balls{gap:7px}
+    .evo-balls .ball{--s:34px;font-size:12px}
+    .evo-balls .ball.gap{margin-left:10px}
     .ticket-input{gap:8px}
     #myRed{font-size:12.5px;letter-spacing:.08em;padding:11px 10px}
     #myBlue{width:62px;font-size:12.5px;padding:11px 6px}
@@ -755,22 +856,23 @@
     <div class="block-head">
       <span class="idx">03</span>
       <h2>算法体检</h2>
-      <span class="note">样本外回测 · 最近 120 期</span>
+      <span class="note">样本外回测 · 四策略 · 最近 120 期</span>
     </div>
 
     <div class="lab-grid">
       <div class="lab-cell">
         <h4>Red Ball Hit Rate / 红球平均命中</h4>
+        <div class="bt-current" id="btCurrent">尚未运行 · 点击下方按钮开始</div>
         <div class="big-stat">
           <span class="v" id="btRed">—</span><span class="u">个 / 期</span>
         </div>
         <div class="vs-line">
           <span>纯随机期望 <b>1.09</b></span>
-          <span>单期最多 6 个</span>
+          <span id="btRedCi">95% CI —</span>
         </div>
         <div class="bars" id="btBars"></div>
         <div style="margin-top:20px">
-          <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">运行回测</button>
+          <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">运行四策略回测</button>
         </div>
       </div>
 
@@ -781,13 +883,48 @@
         </div>
         <div class="vs-line">
           <span>理论概率 <b>6.25%</b></span>
+          <span id="btBlueCi">95% CI —</span>
+        </div>
+        <div class="vs-line" style="border-top:0;padding-top:4px;margin-top:4px">
+          <span>相对随机</span>
           <span id="btGap">—</span>
         </div>
         <div class="verdict" id="verdict">
-          点击「运行回测」，会用最近 120 期做样本外检验：每一期都只用它<strong>之前</strong>的数据推演，
-          再与真实开奖逐期比对。<br><br>
+          点击「运行四策略回测」，会在同一批最近 120 期上把四种策略各跑一遍：
+          每一期都只用它<strong>之前</strong>的数据推演，再与真实开奖逐期比对。<br><br>
+          每种策略给出 95% 置信区间和固定奖回收；区间覆盖随机期望，就说明差异不显著。<br><br>
           结果大概率平平无奇——这正是重点。
         </div>
+      </div>
+    </div>
+
+    <div class="bt-compare">
+      <div class="bt-compare-head">
+        <h4>Four Strategies / 四策略对比</h4>
+        <span id="btMeta">最近 120 期 · 每期 1 注 · 成本 ¥2/注</span>
+      </div>
+      <div class="bt-scroll">
+        <table class="bt-table">
+          <thead>
+            <tr>
+              <th>策略</th>
+              <th>红球均值（95% CI）</th>
+              <th>蓝球命中率（95% CI）</th>
+              <th>相对随机</th>
+              <th>最高</th>
+              <th>固定奖回收</th>
+              <th>结论</th>
+            </tr>
+          </thead>
+          <tbody id="btBody">
+            <tr><td colspan="7" class="bt-empty">点击上方「运行四策略回测」，四种策略会在同一批 120 期上各跑一遍。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bt-foot">
+        成本按 <b>2 元/注</b> 计算；固定奖按三等奖 3,000、四等奖 200、五等奖 10、六等奖 5 元计算。
+        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。置信区间为 95%，覆盖随机期望即视为差异不显著。
+        「纯随机构造」是对照组，它同样可能因抽样波动落在区间外——这正是 120 期样本不能当结论的原因。
       </div>
     </div>
   </section>
@@ -869,6 +1006,83 @@
     </div>
   </section>
 
+  <!-- 自进化预测 -->
+  <section id="evolve">
+    <div class="block-head">
+      <span class="idx">05</span>
+      <h2>自进化预测</h2>
+      <span class="note">最早 100 期起步 · 逐期修正 · 输出下一期</span>
+    </div>
+
+    <div class="evo-panel">
+      <div class="evo-top">
+        <div class="evo-next">
+          <div class="evo-label">Next Issue / 下一期预测</div>
+          <div class="evo-issue" id="evoIssue">尚未运行</div>
+          <div class="evo-balls" id="evoBalls">
+            <span class="empty">点击右侧「运行自进化」，从最早 100 期开始逐期预测、对照、修正。</span>
+          </div>
+          <div class="evo-actions" id="evoActions" hidden>
+            <button class="btn ghost" id="btnEvoCopy" type="button">复制号码</button>
+            <button class="btn ghost" id="btnEvoFill" type="button">填入验票机</button>
+          </div>
+        </div>
+        <div class="evo-run">
+          <button class="btn" id="btnEvolve" type="button">运行自进化</button>
+          <div class="evo-progress" id="evoProgress">起始：最早 100 期<br>预测 → 对照 → 修正，直到最新一期</div>
+        </div>
+      </div>
+
+      <div class="evo-metrics">
+        <div class="evo-metric">
+          <div class="k">Walk-forward 红球均值</div>
+          <div class="v" id="evoRed">—</div>
+          <div class="s">随机期望 1.09</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">蓝球命中率</div>
+          <div class="v" id="evoBlue">—</div>
+          <div class="s">理论 6.25%</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">最高单期</div>
+          <div class="v" id="evoBest">—</div>
+          <div class="s">6 个红球封顶</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">进化步数</div>
+          <div class="v" id="evoSteps">—</div>
+          <div class="s" id="evoRange">—</div>
+        </div>
+      </div>
+
+      <div class="evo-chart-box">
+        <div class="evo-chart-head">
+          <span>Evolution Curve / 滚动 100 期红球均值</span>
+          <span>虚线 = 随机期望 1.09</span>
+        </div>
+        <div class="evo-chart" id="evoChart">
+          <div style="display:grid;place-items:center;height:100%;font-size:10.5px;color:var(--dim)">运行后生成进化曲线</div>
+        </div>
+      </div>
+
+      <div class="evo-weights-box">
+        <div class="evo-chart-head">
+          <span>Final Function / 最终号码函数权重</span>
+          <span>f(x) = Σ w · p(x)</span>
+        </div>
+        <div class="evo-weights" id="evoWeights">
+          <div class="evo-wtitle">运行后显示最终函数权重</div>
+        </div>
+      </div>
+
+      <div class="evo-note" id="evoNote">
+        每期都先给出预测，再用该期真实开奖修正权重，下一期重新计算；全程不使用未来数据。
+        双色球开奖独立随机，这里的进化只代表模型在拟合历史，不代表能预测未来。
+      </div>
+    </div>
+  </section>
+
   <footer>
     <b>数据来源</b>　中国福利彩票发行管理中心官网 cwl.gov.cn 官方接口，并与 500 彩票网 / 中彩网历史数据交叉核验。<span id="footMeta">—</span><br>
     <b>免责声明</b>　双色球每期开奖均为独立随机事件，历史频率与遗漏值不具备任何预测效力。本页为数据可视化与概率科普用途，不构成投注建议。请理性购彩，量力而行。
@@ -910,6 +1124,7 @@ window.SSQ_RAW = "2026132|2026-11-17|05,09,13,17,18,21|11;2026131|2026-11-15|01,
   });                                  // 倒序：DRAWS[0] 为最新一期
 
   const N = DRAWS.length;
+  const CHRONO = DRAWS.slice().reverse();   // 正序：CHRONO[0] 为最早一期
   const RED_RANGE = Array.from({length:33}, (_, i) => i + 1);
   const BLUE_RANGE = Array.from({length:16}, (_, i) => i + 1);
 
@@ -1674,94 +1889,671 @@ window.SSQ_RAW = "2026132|2026-11-17|05,09,13,17,18,21|11;2026131|2026-11-15|01,
     });
   }
 
-  /* ══════════ 6. 回测（时间分片，避免主线程卡死） ══════════ */
+  /* ══════════ 6. 回测（四策略对比 + 置信区间 + 固定奖回收） ══════════ */
+  const BT_N = Math.min(120, N - 1);
+  const BT_COST = 2;
+  const BT_RED_EXPECT = 6 * 6 / 33;
+  const BT_BLUE_EXPECT = 1 / 16;
+  const BT_PRIZE = { 1:0, 2:0, 3:3000, 4:200, 5:10, 6:5 };
+  const BT_KEYS = Object.keys(STRATS);
+  let btResults = null;
+  let btViewKey = "hot";
+
+  function meanCi(sum, sumSq, n){
+    const mean = sum / n;
+    const variance = n > 1 ? Math.max(0, (sumSq - n * mean * mean) / (n - 1)) : 0;
+    const se = Math.sqrt(variance / n);
+    return { mean, lo: mean - 1.96 * se, hi: mean + 1.96 * se, sd: Math.sqrt(variance) };
+  }
+
+  function wilsonCi(k, n){
+    const z = 1.959964;
+    const p = n ? k / n : 0;
+    const den = 1 + z * z / n;
+    const center = (p + z * z / (2 * n)) / den;
+    const half = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den;
+    return [Math.max(0, center - half), Math.min(1, center + half)];
+  }
+
+  function sigOf(lo, hi, expect){
+    return hi < expect ? "below" : lo > expect ? "above" : "flat";
+  }
+
+  function sigLabel(sig){
+    return sig === "below" ? "显著低于随机" : sig === "above" ? "显著高于随机" : "与随机无显著差异";
+  }
+
+  function signed(v, digits){
+    return (v >= 0 ? "+" : "") + v.toFixed(digits);
+  }
+
   function backtest(){
     const btn = $("#btnBacktest");
     if (btn.disabled) return;
     btn.disabled = true;
-    btn.textContent = "回测中…";
+    btn.textContent = "四策略回测中…";
 
-    const TEST = Math.min(120, N - 1);
-    const hitDist = new Array(7).fill(0);
-    let redHits = 0, blueHits = 0, best = 0, i = 0;
+    const acc = {};
+    BT_KEYS.forEach(k => {
+      acc[k] = {
+        redSum: 0, redSq: 0, blueHits: 0, best: 0,
+        hitDist: new Array(7).fill(0),
+        tiers: new Array(7).fill(0),
+        fixed: 0
+      };
+    });
+    const statsCache = new Array(BT_N);
+    let i = 0;
 
     // DRAWS[i] 为待测期，只能用 DRAWS[i+1..] 的数据
     function stepOnce(){
-      const S = statsOf(DRAWS, i + 1);
-      const g = generate(S, curStrat, x => detJitter(i, x));
+      const S = statsCache[i] || (statsCache[i] = statsOf(DRAWS, i + 1));
       const actual = DRAWS[i];
-      let hit = 0;
-      const ar = actual.red;
-      for (let k = 0; k < 6; k++) if (ar.indexOf(g.red[k]) >= 0) hit++;
-      redHits += hit;
-      hitDist[hit]++;
-      if (hit > best) best = hit;
-      if (g.blue === actual.blue) blueHits++;
+      for (const k of BT_KEYS){
+        const g = generate(S, k, null);
+        let hit = 0;
+        for (let t = 0; t < 6; t++) if (actual.red.indexOf(g.red[t]) >= 0) hit++;
+        const a = acc[k];
+        a.redSum += hit;
+        a.redSq += hit * hit;
+        a.hitDist[hit]++;
+        if (hit > a.best) a.best = hit;
+        const bh = g.blue === actual.blue ? 1 : 0;
+        a.blueHits += bh;
+        const tier = prizeTier(hit, bh);
+        if (tier){
+          a.tiers[tier]++;
+          a.fixed += BT_PRIZE[tier] || 0;
+        }
+      }
       i++;
     }
 
     function finish(){
-      const avg = redHits / TEST;
-      const blueRate = blueHits / TEST * 100;
-
-      $("#btRed").textContent = avg.toFixed(2);
-      $("#btBlue").textContent = blueRate.toFixed(2) + "%";
-
-      const diff = avg - 1.0909;
-      $("#btGap").innerHTML = `相对随机 <b>${diff >= 0 ? "+" : ""}${diff.toFixed(2)}</b>`;
-
-      const bars = $("#btBars");
-      bars.innerHTML = "";
-      const maxC = Math.max(...hitDist.slice(0, 7));
-      for (let h = 0; h <= 5; h++){
-        const row = document.createElement("div");
-        row.className = "bar-row";
-        row.innerHTML = `
-          <span>${h} 个</span>
-          <span class="bar-track"><span class="bar-fill" style="width:0%"></span></span>
-          <span style="text-align:right">${hitDist[h]} 期</span>`;
-        bars.appendChild(row);
-        requestAnimationFrame(() => {
-          row.querySelector(".bar-fill").style.width = (hitDist[h] / Math.max(1, maxC) * 100) + "%";
-        });
-      }
-
-      const verdict = diff > 0.25
-        ? `算法平均命中 <b>${avg.toFixed(2)}</b> 个，看起来比随机高一点点。但 120 期样本的抽样误差约 ±0.15，这点差距<b>纯属噪声</b>，不代表有预测力。`
-        : diff < -0.25
-        ? `算法平均命中 <b>${avg.toFixed(2)}</b> 个，还不如纯随机。热号与遗漏都是<b>事后幻觉</b>，过去不会影响下一颗球。`
-        : `算法平均命中 <b>${avg.toFixed(2)}</b> 个，与纯随机期望 1.09 几乎重合。这就是答案：<b>没有任何策略优于随机</b>。`;
-
-      $("#verdict").innerHTML = verdict + `<br><br>
-        本次回测使用「${STRATS[curStrat].label}」策略，最高单期命中 ${best} 个红球，蓝球命中 ${blueHits} 次。`;
-
+      const results = {};
+      BT_KEYS.forEach(k => {
+        const a = acc[k];
+        const red = meanCi(a.redSum, a.redSq, BT_N);
+        const blueP = a.blueHits / BT_N;
+        const blueCi = wilsonCi(a.blueHits, BT_N);
+        const cost = BT_N * BT_COST;
+        results[k] = {
+          key: k,
+          label: STRATS[k].label,
+          red,
+          redSig: sigOf(red.lo, red.hi, BT_RED_EXPECT),
+          blueP,
+          blueCi,
+          blueSig: sigOf(blueCi[0], blueCi[1], BT_BLUE_EXPECT),
+          blueHits: a.blueHits,
+          best: a.best,
+          hitDist: a.hitDist,
+          tiers: a.tiers,
+          fixed: a.fixed,
+          cost,
+          recovery: cost ? a.fixed / cost * 100 : 0,
+          floating: a.tiers[1] + a.tiers[2]
+        };
+      });
+      btResults = results;
+      btViewKey = curStrat;
+      renderBtTable();
+      renderBtDetail();
+      renderBtVerdict();
       btn.disabled = false;
       btn.textContent = "重新运行回测";
     }
 
     function run(){
       const t0 = performance.now();
-      while (i < TEST && performance.now() - t0 < 26) stepOnce();
-      if (i < TEST) setTimeout(run, 0);
-      else finish();
+      while (i < BT_N && performance.now() - t0 < 26) stepOnce();
+      if (i < BT_N){
+        btn.textContent = `四策略回测中… ${Math.round(i / BT_N * 100)}%`;
+        setTimeout(run, 0);
+      } else finish();
     }
     setTimeout(run, 50);
   }
 
-  function detJitter(i, x){
-    // 确定性伪随机：同一期同一号码结果固定
-    const v = Math.sin(i * 12.9898 + x * 78.233) * 43758.5453;
-    return (v - Math.floor(v)) - 0.5;
+  function renderBtTable(){
+    const tbody = $("#btBody");
+    if (!tbody || !btResults) return;
+    tbody.innerHTML = "";
+    BT_KEYS.forEach(k => {
+      const r = btResults[k];
+      const redDiff = r.red.mean - BT_RED_EXPECT;
+      const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
+      const bothFlat = r.redSig === "flat" && r.blueSig === "flat";
+      const anyAbove = r.redSig === "above" || r.blueSig === "above";
+      const verdict = bothFlat ? "无显著差异" : anyAbove ? "高于随机" : "低于随机";
+      const vClass = bothFlat ? "sig-flat" : anyAbove ? "sig-above" : "sig-below";
+      const tr = document.createElement("tr");
+      tr.dataset.k = k;
+      if (k === btViewKey) tr.classList.add("on");
+      tr.innerHTML =
+        `<td><div class="nm">${r.label}</div><div class="ci">${k === "pure" ? "随机对照" : "策略"}</div></td>` +
+        `<td>${r.red.mean.toFixed(2)}<div class="ci">95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}</div></td>` +
+        `<td>${(r.blueP * 100).toFixed(2)}%<div class="ci">95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%</div></td>` +
+        `<td class="sig-${r.redSig}">红 ${signed(redDiff, 2)}<div class="ci sig-${r.blueSig}">蓝 ${signed(blueDiff, 1)}pp</div></td>` +
+        `<td>${r.best} 红<div class="ci">蓝球 ${r.blueHits} 次</div></td>` +
+        `<td>¥${r.fixed}<div class="ci">${r.recovery.toFixed(1)}% · 成本 ¥${r.cost}</div>` +
+          `<div class="ci">3等${r.tiers[3]} 4等${r.tiers[4]} 5等${r.tiers[5]} 6等${r.tiers[6]}</div>` +
+          (r.floating ? `<div class="ci warn">浮动奖 ${r.floating} 次</div>` : "") +
+        `</td>` +
+        `<td class="${vClass}">${verdict}</td>`;
+      tr.title = "点击查看该策略的命中分布";
+      tr.addEventListener("click", () => {
+        btViewKey = k;
+        renderBtTable();
+        renderBtDetail();
+        renderBtVerdict();
+      });
+      tbody.appendChild(tr);
+    });
+    $("#btMeta").textContent = `最近 ${BT_N} 期 · 每期 1 注 · 成本 ¥2/注 · 合计 ¥${BT_N * BT_COST}`;
+  }
+
+  function renderBtDetail(){
+    if (!btResults) return;
+    const r = btResults[btViewKey];
+    if (!r) return;
+    const redDiff = r.red.mean - BT_RED_EXPECT;
+    const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
+    $("#btCurrent").textContent = "回测详情 · " + r.label;
+    $("#btRed").textContent = r.red.mean.toFixed(2);
+    $("#btRedCi").textContent = `95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}`;
+    $("#btBlue").textContent = (r.blueP * 100).toFixed(2) + "%";
+    $("#btBlueCi").textContent = `95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%`;
+    $("#btGap").textContent = `红 ${signed(redDiff, 2)} · 蓝 ${signed(blueDiff, 1)}pp`;
+
+    const bars = $("#btBars");
+    bars.innerHTML = "";
+    const maxC = Math.max(1, ...r.hitDist);
+    for (let h = 0; h <= 6; h++){
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML =
+        `<span>${h} 个</span>` +
+        `<span class="bar-track"><span class="bar-fill" style="width:0%"></span></span>` +
+        `<span style="text-align:right">${r.hitDist[h]} 期</span>`;
+      bars.appendChild(row);
+      requestAnimationFrame(() => {
+        row.querySelector(".bar-fill").style.width = (r.hitDist[h] / maxC * 100) + "%";
+      });
+    }
+  }
+
+  function renderBtVerdict(){
+    if (!btResults) return;
+    const flat = BT_KEYS.filter(k => btResults[k].redSig === "flat" && btResults[k].blueSig === "flat").length;
+    const off = BT_KEYS.length - flat;
+    const r = btResults[btViewKey];
+    const head = off === 0
+      ? `四种策略的红球均值与蓝球命中率，95% 置信区间<b>全部覆盖随机期望</b>。${BT_N} 期里没有哪种策略表现出统计显著的预测力。`
+      : `${BT_KEYS.length} 种策略中有 <b>${off} 种</b>至少一项指标落在随机区间外。单次回测里这可能是抽样波动，不能直接当成预测力。`;
+    const detail =
+      `查看中：<b>${r.label}</b>。红球 ${r.red.mean.toFixed(2)} 个（95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}，${sigLabel(r.redSig)}），` +
+      `蓝球 ${(r.blueP * 100).toFixed(2)}%（95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%，${sigLabel(r.blueSig)}）。` +
+      `最高 ${r.best} 红，蓝球命中 ${r.blueHits} 次；固定奖回收 ¥${r.fixed} / 成本 ¥${r.cost}（${r.recovery.toFixed(1)}%）。`;
+    $("#verdict").innerHTML = head + `<br><br>` + detail + `<br><br>` +
+      `固定奖按三等 3,000、四等 200、五等 10、六等 5 元计算；一、二等奖为浮动奖，单独计数，不计入回收率。`;
+  }
+
+  /* ══════════ 6c. 自进化预测（walk-forward 在线学习） ══════════ */
+  const EVO_START = 100;
+  const EVO_RECENT = 30;
+  const EVO_ETA = 0.03;
+  const EVO_FLOOR = 0.02;
+  const EVO_FEATURES = ["freq", "due", "recent", "trans"];
+  const EVO_LABELS = { freq:"频率", due:"遗漏", recent:"近期", trans:"转移" };
+  let evoResult = null;
+  let evoBusy = false;
+  let evoFlashTimer = 0;
+
+  function evoNewState(){
+    return {
+      n: 0,
+      freqR: new Array(34).fill(0), freqB: new Array(17).fill(0),
+      lastR: new Array(34).fill(-1), lastB: new Array(17).fill(-1),
+      recentR: new Array(34).fill(0), recentB: new Array(17).fill(0),
+      recentQ: [],
+      transR: Array.from({length:34}, () => new Array(34).fill(0)),
+      transB: Array.from({length:17}, () => new Array(17).fill(0)),
+      prevRed: null, prevBlue: null,
+      wR: { freq:0.25, due:0.25, recent:0.25, trans:0.25 },
+      wB: { freq:0.25, due:0.25, recent:0.25, trans:0.25 },
+      steps: 0, redHits: 0, blueHits: 0, best: 0,
+      window: [], curve: [], lastPred: null
+    };
+  }
+
+  function evoUpdateStats(st, draw){
+    if (st.prevRed){
+      for (const y of st.prevRed)
+        for (const x of draw.red) st.transR[y][x]++;
+      st.transB[st.prevBlue][draw.blue]++;
+    }
+    const idx = st.n;
+    for (const x of draw.red){
+      st.freqR[x]++;
+      st.lastR[x] = idx;
+      st.recentR[x]++;
+    }
+    st.freqB[draw.blue]++;
+    st.lastB[draw.blue] = idx;
+    st.recentB[draw.blue]++;
+    st.recentQ.push(draw);
+    if (st.recentQ.length > EVO_RECENT){
+      const old = st.recentQ.shift();
+      for (const x of old.red) st.recentR[x]--;
+      st.recentB[old.blue]--;
+    }
+    st.prevRed = draw.red.slice();
+    st.prevBlue = draw.blue;
+    st.n++;
+  }
+
+  function evoDist(st){
+    const n = st.n;
+    const red = {
+      freq: new Array(34).fill(0), due: new Array(34).fill(0),
+      recent: new Array(34).fill(0), trans: new Array(34).fill(0)
+    };
+    const blue = {
+      freq: new Array(17).fill(0), due: new Array(17).fill(0),
+      recent: new Array(17).fill(0), trans: new Array(17).fill(0)
+    };
+
+    let tot = 0;
+    for (let x = 1; x <= 33; x++){ red.freq[x] = st.freqR[x] + 1; tot += red.freq[x]; }
+    for (let x = 1; x <= 33; x++) red.freq[x] /= tot;
+
+    tot = 0;
+    for (let x = 1; x <= 33; x++){
+      const expGap = n / Math.max(1, st.freqR[x]);
+      const gap = st.lastR[x] >= 0 ? n - st.lastR[x] : n + 1;
+      red.due[x] = (gap + 0.5) / (expGap + 1);
+      tot += red.due[x];
+    }
+    for (let x = 1; x <= 33; x++) red.due[x] /= tot;
+
+    tot = 0;
+    for (let x = 1; x <= 33; x++){ red.recent[x] = st.recentR[x] + 0.5; tot += red.recent[x]; }
+    for (let x = 1; x <= 33; x++) red.recent[x] /= tot;
+
+    if (st.prevRed){
+      const rowSum = {};
+      for (const y of st.prevRed) rowSum[y] = st.transR[y].reduce((a, b) => a + b, 0);
+      tot = 0;
+      for (let x = 1; x <= 33; x++){
+        let v = 0;
+        for (const y of st.prevRed)
+          v += (st.transR[y][x] + 0.5) / (rowSum[y] + 16.5);
+        red.trans[x] = v;
+        tot += v;
+      }
+      for (let x = 1; x <= 33; x++) red.trans[x] /= tot;
+    } else {
+      for (let x = 1; x <= 33; x++) red.trans[x] = 1 / 33;
+    }
+
+    tot = 0;
+    for (let x = 1; x <= 16; x++){ blue.freq[x] = st.freqB[x] + 1; tot += blue.freq[x]; }
+    for (let x = 1; x <= 16; x++) blue.freq[x] /= tot;
+
+    tot = 0;
+    for (let x = 1; x <= 16; x++){
+      const expGap = n / Math.max(1, st.freqB[x]);
+      const gap = st.lastB[x] >= 0 ? n - st.lastB[x] : n + 1;
+      blue.due[x] = (gap + 0.5) / (expGap + 1);
+      tot += blue.due[x];
+    }
+    for (let x = 1; x <= 16; x++) blue.due[x] /= tot;
+
+    tot = 0;
+    for (let x = 1; x <= 16; x++){ blue.recent[x] = st.recentB[x] + 0.5; tot += blue.recent[x]; }
+    for (let x = 1; x <= 16; x++) blue.recent[x] /= tot;
+
+    if (st.prevBlue !== null){
+      const rowSum = st.transB[st.prevBlue].reduce((a, b) => a + b, 0);
+      tot = 0;
+      for (let x = 1; x <= 16; x++){
+        blue.trans[x] = (st.transB[st.prevBlue][x] + 0.5) / (rowSum + 8);
+        tot += blue.trans[x];
+      }
+      for (let x = 1; x <= 16; x++) blue.trans[x] /= tot;
+    } else {
+      for (let x = 1; x <= 16; x++) blue.trans[x] = 1 / 16;
+    }
+    return { red, blue };
+  }
+
+  function evoScore(dist, w, max){
+    const out = new Array(max + 1).fill(0);
+    for (let x = 1; x <= max; x++){
+      out[x] = w.freq * dist.freq[x] + w.due * dist.due[x] +
+               w.recent * dist.recent[x] + w.trans * dist.trans[x];
+    }
+    return out;
+  }
+
+  function evoShapePenalty(red){
+    const sum = red.reduce((a, b) => a + b, 0);
+    const odd = red.filter(x => x % 2 === 1).length;
+    const big = red.filter(x => x >= 17).length;
+    const z1 = red.filter(x => x <= 11).length;
+    const z2 = red.filter(x => x >= 12 && x <= 22).length;
+    const z3 = red.filter(x => x >= 23).length;
+    let p = 0;
+    if (sum < 72) p += 1 + (72 - sum) / 20;
+    if (sum > 128) p += 1 + (sum - 128) / 20;
+    p += Math.max(0, Math.abs(odd - 3) - 1);
+    p += Math.max(0, Math.abs(big - 3) - 1);
+    if (!z1) p++;
+    if (!z2) p++;
+    if (!z3) p++;
+    return p;
+  }
+
+  function evoPickRed(score){
+    const order = [];
+    for (let x = 1; x <= 33; x++) order.push(x);
+    order.sort((a, b) => score[b] - score[a] || a - b);
+
+    let sel = order.slice(0, 6).sort((a, b) => a - b);
+    if (okShape(sel)) return sel;
+    let curPen = evoShapePenalty(sel);
+    const top = order.slice(0, 18);
+    for (let iter = 0; iter < 40; iter++){
+      let best = null;
+      for (let i = 0; i < 6; i++){
+        for (const j of top){
+          if (sel.includes(j)) continue;
+          const cand = sel.slice();
+          cand[i] = j;
+          cand.sort((a, b) => a - b);
+          const pen = evoShapePenalty(cand);
+          const sc = cand.reduce((s, x) => s + score[x], 0);
+          if (!best || pen < best.pen - 1e-12 ||
+              (Math.abs(pen - best.pen) < 1e-12 && sc > best.sc)){
+            best = { pen, sc, sel: cand };
+          }
+        }
+      }
+      if (!best || best.pen >= curPen - 1e-12) break;
+      sel = best.sel;
+      curPen = best.pen;
+      if (curPen === 0) return sel;
+    }
+
+    for (const k of [12, 14]){
+      const pool = order.slice(0, k);
+      let best = null;
+      const comb = [];
+      const walk = (start, depth) => {
+        if (depth === 6){
+          const cand = comb.slice();
+          if (okShape(cand)){
+            const sc = cand.reduce((s, x) => s + score[x], 0);
+            if (!best || sc > best.sc) best = { sc, sel: cand.slice() };
+          }
+          return;
+        }
+        for (let i = start; i <= pool.length - (6 - depth); i++){
+          comb.push(pool[i]);
+          walk(i + 1, depth + 1);
+          comb.pop();
+        }
+      };
+      walk(0, 0);
+      if (best) return best.sel;
+    }
+    return sel;
+  }
+
+  function evoPickBlue(score){
+    let best = 1;
+    for (let x = 2; x <= 16; x++) if (score[x] > score[best]) best = x;
+    return best;
+  }
+
+  function evoPredict(st){
+    const d = evoDist(st);
+    const sR = evoScore(d.red, st.wR, 33);
+    const sB = evoScore(d.blue, st.wB, 16);
+    return {
+      red: evoPickRed(sR),
+      blue: evoPickBlue(sB),
+      dR: d.red,
+      dB: d.blue
+    };
+  }
+
+  function evoUpdateWeights(w, ll){
+    let sum = 0;
+    for (const k of EVO_FEATURES){
+      w[k] = Math.max(EVO_FLOOR, w[k] * Math.exp(EVO_ETA * ll[k]));
+      sum += w[k];
+    }
+    for (const k of EVO_FEATURES) w[k] /= sum;
+  }
+
+  function evoEvaluate(st, pred, actual){
+    let hit = 0;
+    for (const x of pred.red) if (actual.red.includes(x)) hit++;
+    const bh = pred.blue === actual.blue ? 1 : 0;
+    st.steps++;
+    st.redHits += hit;
+    st.blueHits += bh;
+    if (hit > st.best) st.best = hit;
+    st.window.push(hit);
+    if (st.window.length > 100) st.window.shift();
+    if (st.steps >= 100 && st.steps % 10 === 0){
+      st.curve.push({
+        step: st.steps,
+        avg: st.window.reduce((a, b) => a + b, 0) / st.window.length
+      });
+    }
+
+    const llR = {}, llB = {};
+    for (const k of EVO_FEATURES){
+      let s = 0;
+      for (const x of actual.red) s += Math.log(Math.max(1e-9, pred.dR[k][x]) * 33);
+      llR[k] = s / 6;
+    }
+    for (const k of EVO_FEATURES){
+      llB[k] = Math.log(Math.max(1e-9, pred.dB[k][actual.blue]) * 16);
+    }
+    evoUpdateWeights(st.wR, llR);
+    evoUpdateWeights(st.wB, llB);
+  }
+
+  function evoNextIssue(){
+    const newest = DRAWS[0];
+    let year = Number(newest.code.slice(0, 4));
+    let seq = Number(newest.code.slice(4)) + 1;
+    if (seq > 999){ year++; seq = 1; }
+    return year + String(seq).padStart(3, "0");
+  }
+
+  function runEvolution(){
+    if (evoBusy) return;
+    if (N <= EVO_START){
+      flashNote("历史数据不足 101 期，无法做自进化");
+      return;
+    }
+    const btn = $("#btnEvolve");
+    evoBusy = true;
+    btn.disabled = true;
+    btn.textContent = "进化中…";
+    clearTimeout(evoFlashTimer);
+    $("#evoProgress").style.color = "";
+    $("#evoActions").hidden = true;
+    $("#evoIssue").textContent = "计算中…";
+    $("#evoBalls").innerHTML = '<span class="empty">正在用最早 100 期建立初始函数…</span>';
+    $("#evoProgress").textContent = "初始化：最早 100 期";
+
+    setTimeout(() => {
+      const st = evoNewState();
+      for (let i = 0; i < EVO_START; i++) evoUpdateStats(st, CHRONO[i]);
+      let t = EVO_START;
+      const total = N - EVO_START;
+
+      function stepChunk(){
+        const until = Math.min(N, t + 200);
+        while (t < until){
+          const pred = evoPredict(st);
+          const actual = CHRONO[t];
+          evoEvaluate(st, pred, actual);
+          evoUpdateStats(st, actual);
+          t++;
+        }
+        if (t < N){
+          const done = t - EVO_START;
+          btn.textContent = `进化中… ${Math.round(done / total * 100)}%`;
+          $("#evoProgress").textContent = `已修正 ${done} / ${total} 期`;
+          setTimeout(stepChunk, 0);
+        } else {
+          finishEvolution(st);
+        }
+      }
+      stepChunk();
+    }, 30);
+  }
+
+  function finishEvolution(st){
+    const pred = evoPredict(st);
+    if (st.curve.length && st.curve[st.curve.length - 1].step !== st.steps){
+      st.curve.push({
+        step: st.steps,
+        avg: st.window.reduce((a, b) => a + b, 0) / st.window.length
+      });
+    }
+    evoResult = {
+      pred,
+      nextIssue: evoNextIssue(),
+      steps: st.steps,
+      redAvg: st.redHits / st.steps,
+      blueRate: st.blueHits / st.steps * 100,
+      best: st.best,
+      wR: { ...st.wR },
+      wB: { ...st.wB },
+      curve: st.curve.slice(),
+      startCode: CHRONO[0].code,
+      startDate: CHRONO[0].date,
+      startEndCode: CHRONO[EVO_START - 1].code,
+      startEndDate: CHRONO[EVO_START - 1].date,
+      endCode: DRAWS[0].code,
+      endDate: DRAWS[0].date
+    };
+    renderEvolution(evoResult);
+    evoBusy = false;
+    const btn = $("#btnEvolve");
+    btn.disabled = false;
+    btn.textContent = "重新运行";
+  }
+
+  function renderEvolution(res){
+    $("#evoIssue").innerHTML = `${res.nextIssue} 期<small>预计下一期</small>`;
+    $("#evoBalls").innerHTML =
+      res.pred.red.map(x => `<div class="ball red pop">${pad(x)}</div>`).join("") +
+      `<div class="ball blue gap pop">${pad(res.pred.blue)}</div>`;
+    $("#evoActions").hidden = false;
+
+    $("#evoRed").textContent = res.redAvg.toFixed(3);
+    $("#evoBlue").textContent = res.blueRate.toFixed(2) + "%";
+    $("#evoBest").textContent = res.best + " 红";
+    $("#evoSteps").textContent = res.steps;
+    $("#evoRange").textContent = `${res.startCode} → ${res.endCode}`;
+    $("#evoProgress").textContent = `已完成 ${res.steps} 次预测与修正 · 同一份数据结果固定`;
+
+    renderEvoChart(res);
+    renderEvoWeights(res);
+
+    const diff = res.redAvg - 1.0909;
+    const fR = EVO_FEATURES.map(k => `${(res.wR[k] * 100).toFixed(1)}% ${EVO_LABELS[k]}`).join(" + ");
+    const fB = EVO_FEATURES.map(k => `${(res.wB[k] * 100).toFixed(1)}% ${EVO_LABELS[k]}`).join(" + ");
+    $("#evoNote").innerHTML =
+      `从最早 100 期（${res.startCode}–${res.startEndCode}，${res.startDate} 至 ${res.startEndDate}）起步，` +
+      `逐期修正到 ${res.endCode}（${res.endDate}），共 ${res.steps} 次「先预测、后修正」。` +
+      `红球均值 <b>${res.redAvg.toFixed(3)}</b>（随机 1.09，差 ${signed(diff, 3)}），` +
+      `蓝球 <b>${res.blueRate.toFixed(2)}%</b>（随机 6.25%）。<br>` +
+      `最终函数：红 <b>${fR}</b>；蓝 <b>${fB}</b>。<br>` +
+      `如果成绩贴着随机线，说明这套自适应模型也没有找到可利用规律——这与双色球独立随机相符，不构成投注建议。`;
+  }
+
+  function renderEvoChart(res){
+    const box = $("#evoChart");
+    const pts = res.curve;
+    if (!pts.length){ box.innerHTML = ""; return; }
+    const W = Math.max(320, Math.round(box.clientWidth || 640));
+    const H = 170, padL = 34, padR = 12, padT = 14, padB = 20;
+    const vals = pts.map(p => p.avg);
+    let lo = Math.min(1.0909, ...vals);
+    let hi = Math.max(1.0909, ...vals);
+    const span = Math.max(0.2, hi - lo);
+    lo -= span * 0.2;
+    hi += span * 0.2;
+    const x0 = pts[0].step, x1 = pts[pts.length - 1].step;
+    const X = s => padL + (s - x0) / Math.max(1, x1 - x0) * (W - padL - padR);
+    const Y = v => H - padB - (v - lo) / (hi - lo) * (H - padT - padB);
+    const line = pts.map(p => `${X(p.step).toFixed(1)},${Y(p.avg).toFixed(1)}`).join(" ");
+    const baseY = Y(1.0909);
+    const last = pts[pts.length - 1];
+    box.innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">` +
+        `<line x1="${padL}" y1="${baseY}" x2="${W - padR}" y2="${baseY}" stroke="#B8933F" stroke-opacity=".55" stroke-dasharray="4 4" stroke-width="1" vector-effect="non-scaling-stroke"/>` +
+        `<polyline points="${line}" fill="none" stroke="#FF4B41" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>` +
+        `<circle cx="${X(last.step)}" cy="${Y(last.avg)}" r="3" fill="#FF4B41"/>` +
+        `<text x="${padL}" y="11" fill="#4A505A" font-size="9" font-family="monospace">${hi.toFixed(2)}</text>` +
+        `<text x="${padL}" y="${baseY - 4}" fill="#B8933F" font-size="9" font-family="monospace">1.09</text>` +
+        `<text x="${padL}" y="${H - 5}" fill="#4A505A" font-size="9" font-family="monospace">${lo.toFixed(2)}</text>` +
+        `<text x="${W - padR}" y="${H - 5}" text-anchor="end" fill="#4A505A" font-size="9" font-family="monospace">${res.steps} 步</text>` +
+      `</svg>`;
+  }
+
+  function renderEvoWeights(res){
+    const col = (title, w) =>
+      `<div class="evo-wcol"><div class="evo-wtitle">${title}</div>` +
+      EVO_FEATURES.map(k =>
+        `<div class="evo-wrow"><span>${EVO_LABELS[k]}</span>` +
+        `<span class="evo-wbar"><i style="width:${(w[k] * 100).toFixed(1)}%"></i></span>` +
+        `<b>${(w[k] * 100).toFixed(1)}%</b></div>`
+      ).join("") +
+      `</div>`;
+    $("#evoWeights").innerHTML = col("红球函数权重", res.wR) + col("蓝球函数权重", res.wB);
+  }
+
+  function evoFlash(msg){
+    const el = $("#evoProgress");
+    el.textContent = msg;
+    el.style.color = "var(--red-lit)";
+    clearTimeout(evoFlashTimer);
+    evoFlashTimer = setTimeout(() => {
+      el.style.color = "";
+      if (evoResult) el.textContent = `已完成 ${evoResult.steps} 次预测与修正 · 同一份数据结果固定`;
+    }, 1800);
   }
 
   /* ══════════ 6b. 验票机 ══════════ */
+  function prizeTier(r, b){
+    if (r === 6 && b) return 1;
+    if (r === 6) return 2;
+    if (r === 5 && b) return 3;
+    if (r === 5 || (r === 4 && b)) return 4;
+    if (r === 4 || (r === 3 && b)) return 5;
+    if (b) return 6;
+    return 0;
+  }
+
   function prizeOf(r, b){
-    if (r === 6 && b) return { name:"一等奖", money:"浮动奖（500 万起）" };
-    if (r === 6) return { name:"二等奖", money:"浮动奖" };
-    if (r === 5 && b) return { name:"三等奖", money:"3,000 元" };
-    if (r === 5 || (r === 4 && b)) return { name:"四等奖", money:"200 元" };
-    if (r === 4 || (r === 3 && b)) return { name:"五等奖", money:"10 元" };
-    if (b) return { name:"六等奖", money:"5 元" };
+    const tier = prizeTier(r, b);
+    if (tier === 1) return { name:"一等奖", money:"浮动奖（500 万起）" };
+    if (tier === 2) return { name:"二等奖", money:"浮动奖" };
+    if (tier === 3) return { name:"三等奖", money:"3,000 元" };
+    if (tier === 4) return { name:"四等奖", money:"200 元" };
+    if (tier === 5) return { name:"五等奖", money:"10 元" };
+    if (tier === 6) return { name:"六等奖", money:"5 元" };
     return null;
   }
 
@@ -2720,6 +3512,20 @@ window.SSQ_RAW = "2026132|2026-11-17|05,09,13,17,18,21|11;2026131|2026-11-15|01,
   });
   $("#qInput").addEventListener("keydown", e => { if (e.key === "Enter") runQuery(); });
   $("#btnBacktest").addEventListener("click", backtest);
+  $("#btnEvolve").addEventListener("click", runEvolution);
+  $("#btnEvoCopy").addEventListener("click", () => {
+    if (!evoResult) return;
+    copyText(`${evoResult.pred.red.map(pad).join(" ")} + ${pad(evoResult.pred.blue)}`);
+    evoFlash("已复制 " + evoResult.nextIssue + " 期号码");
+  });
+  $("#btnEvoFill").addEventListener("click", () => {
+    if (!evoResult) return;
+    $("#myRed").value = evoResult.pred.red.map(pad).join(" ");
+    $("#myBlue").value = pad(evoResult.pred.blue);
+    $("#inHint").classList.remove("err");
+    $("#myRed").scrollIntoView({ behavior:"smooth", block:"center" });
+    evoFlash("已填入验票机");
+  });
 
   $("#btnCopy").addEventListener("click", async () => {
     if (!lastResult) return;
