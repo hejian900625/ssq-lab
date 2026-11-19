@@ -208,6 +208,20 @@
   .chip.warn{border-color:rgba(200,22,30,.5);color:#E9A19C}
   .chip.warn b{color:#FFB4AE}
 
+  /* 回显提示 */
+  .restore-note{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--dim);
+    border-left:2px solid var(--gold);padding:7px 0 7px 12px;background:rgba(212,175,55,.05);
+  }
+  .restore-note b{color:var(--gold);font-weight:600}
+  .restore-note .dim{opacity:.7}
+  .restore-note button{
+    margin-left:auto;background:none;border:none;padding:0 0 1px;color:var(--muted);
+    font:inherit;letter-spacing:.08em;cursor:pointer;border-bottom:1px solid var(--line-2);
+  }
+  .restore-note button:hover{color:var(--paper)}
+
   .actions{display:flex;gap:12px;align-items:center;margin-top:30px;flex-wrap:wrap}
 
   .btn{
@@ -270,6 +284,57 @@
   .ticket .no{color:var(--dim);font-size:10px;width:26px;flex:0 0 auto}
   .ticket .rr{color:#E9A19C;font-weight:600;flex:1;min-width:0}
   .ticket .bb{color:#93BFEF;font-weight:600;border-left:1px solid var(--line-2);padding-left:10px}
+
+  /* 已保存推演 */
+  .saved{margin-top:26px;border-top:1px dashed var(--line-2);padding-top:22px}
+  .saved-head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:12px}
+  .saved-list{max-height:360px;overflow:auto;padding-right:4px}
+  .saved-item{border:1px solid var(--line);background:rgba(255,255,255,.012);padding:12px 14px;margin-bottom:10px}
+  .saved-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim)}
+  .saved-meta .code{color:var(--gold);font-size:12.5px;letter-spacing:.1em}
+  .saved-meta .mode{color:var(--paper-dim)}
+  .saved-meta .time{margin-left:auto}
+  .saved-nums{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-family:var(--mono);font-size:12.5px;letter-spacing:.05em}
+  .saved-num{display:flex;align-items:center;gap:10px}
+  .saved-num .no{color:var(--dim);font-size:9.5px;width:22px;flex:0 0 auto}
+  .saved-num .rr{color:#E9A19C;font-weight:600;flex:1;min-width:0}
+  .saved-num .bb{color:#93BFEF;font-weight:600;border-left:1px solid var(--line-2);padding-left:10px}
+  .saved-tools{display:flex;gap:16px;margin-top:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em}
+  .saved-tools button{background:none;border:none;padding:0;color:var(--dim);font:inherit;cursor:pointer}
+  .saved-tools button:hover{color:var(--paper)}
+  .saved-tools .del:hover{color:var(--red-lit)}
+  .saved-tools .hint{margin-left:auto;color:var(--dim);opacity:.7}
+
+  /* 本地 SQLite 查询 */
+  .db-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .db-bar input{
+    flex:1 1 240px;min-width:0;background:var(--bg-2);border:1px solid var(--line);
+    color:var(--paper);font-family:var(--mono);font-size:12px;letter-spacing:.05em;
+    padding:10px 12px;outline:none;
+  }
+  .db-bar input:focus{border-color:var(--line-2)}
+  .db-bar input::placeholder{color:var(--dim)}
+  .db-bar .btn{padding:10px 16px;font-size:11.5px;letter-spacing:.1em}
+  .db-status{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--dim);margin-bottom:12px;line-height:1.6}
+  .db-status.ok{color:#7FB08A}
+  .db-status.err{color:#E9A19C}
+  .db-status b{color:var(--gold)}
+  .query-result{
+    border:1px solid var(--line-2);background:rgba(255,255,255,.02);
+    padding:12px 14px;margin-bottom:12px;
+  }
+  .q-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--dim)}
+  .q-head b{color:var(--gold);font-weight:600}
+  .q-draw{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:9px;font-family:var(--mono);font-size:13px;letter-spacing:.05em}
+  .q-draw .rr{color:#E9A19C;font-weight:600}
+  .q-draw .bb{color:#93BFEF;font-weight:600}
+  .q-draw .none{color:var(--gold);font-size:11px}
+  .q-note{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:9px;letter-spacing:.05em}
+  .q-list{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+  .hit{font-size:10px;color:var(--gold);letter-spacing:.06em}
+  .hit.zero{color:var(--dim)}
+  .checks{margin-top:24px;border-top:1px dashed var(--line-2);padding-top:18px}
+  .q-sub{margin-top:14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
 
   /* ───────── 热力矩阵 ───────── */
   .matrix-grid{display:grid;grid-template-columns:1fr;gap:24px}
@@ -589,6 +654,8 @@
           <span>上期 <span id="lastIssue" style="color:var(--muted)">—</span></span>
         </div>
 
+        <div class="restore-note" id="restoreNote" hidden></div>
+
         <div class="lock-row" id="lockRow">
           <span class="lock-label">胆码</span>
           <span id="lockChips" class="lock-chips"></span>
@@ -607,11 +674,24 @@
             <button data-q="10">10 注</button>
           </div>
           <button class="btn ghost" id="btnCopy">复制号码</button>
+          <button class="btn ghost" id="btnSave">保存推演</button>
         </div>
 
         <div class="tickets" id="tickets" style="display:none">
           <div class="tickets-head"><span>本批推演结果</span><span id="ticketCount"></span></div>
           <div id="ticketList"></div>
+        </div>
+
+        <div class="saved" id="savedBox">
+          <div class="saved-head"><span>推演记录 · 本地 SQLite</span><span id="savedCount"></span></div>
+          <div class="db-bar">
+            <input id="qInput" type="text" autocomplete="off" placeholder="按期号或日期查询：2026133 / 2026-11-17 / 11-17">
+            <button class="btn ghost" id="btnQuery" type="button">查询</button>
+            <button class="btn ghost" id="btnQueryClear" type="button">看最近</button>
+          </div>
+          <div class="db-status" id="dbStatus">正在连接本地数据库…</div>
+          <div class="query-result" id="queryResult" hidden></div>
+          <div class="saved-list" id="savedList"></div>
         </div>
       </div>
 
@@ -771,6 +851,12 @@
           <select id="cmpIssue"></select>
           <button class="btn" id="btnCheck">开始验票</button>
           <button class="btn ghost" id="btnFillLast">填入推演结果</button>
+          <button class="btn ghost" id="btnSaveCheck">保存验票</button>
+        </div>
+
+        <div class="checks" id="checkSaved">
+          <div class="saved-head"><span>验票记录 · 本地 SQLite</span><span id="checkCount"></span></div>
+          <div class="saved-list" id="checkList"></div>
         </div>
       </div>
 
@@ -995,6 +1081,7 @@
 
   let busy = false;
   let lastResult = null;
+  let lastCode = null;
   let qty = 1;
 
   function renderBalls(red, blue, animate){
@@ -1043,12 +1130,17 @@
     if (b) b.classList.add("picked", "blue-cell");
   }
 
-  function roll(){
+  function roll(auto){
     if (busy) return;
+    if (!auto){
+      const note = $("#restoreNote");
+      if (note) note.hidden = true;
+    }
     busy = true;
     const btn = $("#btnGen");
     btn.disabled = true;
 
+    lastCode = $("#targetIssue").textContent.trim();
     const S = statsOf(DRAWS);
     const locks = { red: [...lockRed], blue: lockBlue };
     const results = [];
@@ -1072,9 +1164,377 @@
       renderTickets(results);
       markMatrix(main.red, main.blue);
       lastResult = results;
+      storeSnapshot();
       busy = false;
       btn.disabled = false;
     }, 680);
+  }
+
+  /* ══════════ 4b. 推演记录：本地 SQLite 服务 ══════════ */
+  const LAST_KEY = "ssq.last.v1";
+  let apiReady = false;
+
+  function readSnapshot(){
+    try {
+      const snap = JSON.parse(localStorage.getItem(LAST_KEY) || "null");
+      return snap && Array.isArray(snap.picks) && snap.picks.length ? snap : null;
+    } catch (e){ return null; }
+  }
+
+  function storeSnapshot(){
+    if (!lastResult || !lastResult.length) return;
+    const snap = {
+      code: lastCode,
+      strat: curStrat,
+      stratLabel: STRATS[curStrat].label,
+      locks: { red: [...lockRed].sort((a, b) => a - b), blue: lockBlue },
+      picks: lastResult.map(t => ({ red: t.red.slice(), blue: t.blue })),
+      ts: Date.now()
+    };
+    try { localStorage.setItem(LAST_KEY, JSON.stringify(snap)); } catch (e){}
+  }
+
+  async function apiGet(path){
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }
+
+  async function apiSend(method, path, body){
+    const r = await fetch(path, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || data.ok === false) throw new Error(data.error || ("HTTP " + r.status));
+    return data;
+  }
+
+  async function bootApi(){
+    const el = $("#dbStatus");
+    $("#btnSave").disabled = true;
+    $("#btnQuery").disabled = true;
+    try {
+      const info = await apiGet("api/health");
+      apiReady = true;
+      el.className = "db-status ok";
+      el.innerHTML = `SQLite 已连接 · 开奖 <b>${info.draws}</b> 期 · 推演 <b>${info.predictions}</b> 条 · 验票 <b>${info.checks}</b> 条 · <b>${info.db}</b>`;
+      $("#btnSave").disabled = false;
+      $("#btnQuery").disabled = false;
+      await migrateLegacy();
+      await renderSaved();
+      await renderChecks();
+    } catch (e){
+      apiReady = false;
+      el.className = "db-status err";
+      el.innerHTML = location.protocol === "file:"
+        ? "未连接本地服务：先双击 <b>启动服务.bat</b>，再从 <b>http://127.0.0.1:8899</b> 打开本页，推演记录才会写进 SQLite。"
+        : "本地服务未启动或不可用（" + (e.message || e) + "）。";
+    }
+  }
+
+  async function migrateLegacy(){
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem("ssq.saved.v1") || "[]"); } catch (e){}
+    if (!Array.isArray(arr) || !arr.length){
+      try { localStorage.removeItem("ssq.saved.v1"); } catch (e){}
+      return;
+    }
+    let moved = 0;
+    for (const r of arr){
+      if (!r || !r.picks || !r.picks.length) continue;
+      try {
+        await apiSend("POST", "api/predictions", {
+          issue: r.code,
+          strategy: r.strat,
+          strategyLabel: r.stratLabel,
+          picks: r.picks,
+          locks: r.locks,
+          ts: r.ts
+        });
+        moved++;
+      } catch (e){}
+    }
+    if (moved) { try { localStorage.removeItem("ssq.saved.v1"); } catch (e){} }
+  }
+
+  async function refreshApiStatus(){
+    try {
+      const info = await apiGet("api/health");
+      $("#dbStatus").innerHTML =
+        `SQLite 已连接 · 开奖 <b>${info.draws}</b> 期 · 推演 <b>${info.predictions}</b> 条 · 验票 <b>${info.checks}</b> 条 · <b>${info.db}</b>`;
+    } catch (e){}
+  }
+
+  function savedTime(ts){
+    const d = new Date(ts || Date.now()), p = n => String(n).padStart(2, "0");
+    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  async function copyText(text){
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e){
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove();
+    }
+  }
+
+  async function saveRoll(){
+    if (!apiReady){
+      flashNote("先双击「启动服务.bat」，从 http://127.0.0.1:8899 打开再保存");
+      return;
+    }
+    if (!lastResult || !lastResult.length){
+      flashNote("先点「开始推演」，再保存");
+      return;
+    }
+    const issue = lastCode || $("#targetIssue").textContent.trim();
+    const label = STRATS[curStrat].label;
+    const picks = lastResult.map(t => ({ red: t.red.slice(), blue: t.blue }));
+    const locks = { red: [...lockRed].sort((a, b) => a - b), blue: lockBlue };
+    try {
+      const res = await apiSend("POST", "api/predictions", {
+        issue: issue,
+        strategy: curStrat,
+        strategyLabel: label,
+        picks: picks,
+        locks: locks
+      });
+      storeSnapshot({
+        code: issue, strat: curStrat, stratLabel: label,
+        locks: locks, picks: picks, ts: Date.now()
+      });
+      await renderSaved();
+      await refreshApiStatus();
+      flashNote(res.duplicate
+        ? `已存在相同记录：${issue} 期 · ${label}`
+        : `已写入 SQLite：${issue} 期 · ${label} · ${picks.length} 注`);
+    } catch (e){
+      flashNote("保存失败：" + (e.message || e));
+    }
+  }
+
+  async function renderSaved(){
+    const wrap = $("#savedList");
+    if (!wrap) return;
+    if (!apiReady) return;
+    try {
+      const data = await apiGet("api/predictions?limit=20");
+      $("#savedCount").textContent = data.total ? `${data.total} 条` : "";
+      wrap.innerHTML = "";
+      if (!data.items.length){
+        wrap.innerHTML = `<div class="saved-empty">还没有推演记录。推演后点「保存推演」，会写进 data/ssq.db。</div>`;
+        return;
+      }
+      data.items.forEach(rec => wrap.appendChild(predCard(rec, true)));
+    } catch (e){
+      wrap.innerHTML = `<div class="saved-empty">读取记录失败：${e.message}</div>`;
+    }
+  }
+
+  function predCard(rec, withTools){
+    const item = document.createElement("div");
+    item.className = "saved-item";
+    const lockNote = (rec.locks && rec.locks.red && (rec.locks.red.length || rec.locks.blue))
+      ? `胆码 ${rec.locks.red.map(pad).join(" ")}${rec.locks.blue ? " + " + pad(rec.locks.blue) : ""}`
+      : "";
+    const picks = rec.picks || [];
+    const hits = rec.hits || [];
+    const nums = picks.map((p, i) => {
+      const h = hits[i];
+      const hitTxt = h
+        ? `<span class="hit${h.red === 0 && h.blue === 0 ? " zero" : ""}">${h.red} 红${h.blue ? " + 蓝" : ""}</span>`
+        : "";
+      return `<div class="saved-num"><span class="no">${pad(i + 1)}</span>` +
+        `<span class="rr">${p.red.map(pad).join(" ")}</span>` +
+        `<span class="bb">+ ${pad(p.blue)}</span>${hitTxt}</div>`;
+    }).join("");
+
+    item.innerHTML =
+      `<div class="saved-meta">` +
+        `<span class="code">${rec.issue} 期</span>` +
+        (rec.day ? `<span>${rec.day}</span>` : "") +
+        `<span class="mode">${rec.strategyLabel || rec.strategy}</span>` +
+        `<span>${picks.length} 注</span>` +
+        (lockNote ? `<span>${lockNote}</span>` : "") +
+        `<span class="time">${rec.createdAt || savedTime(rec.ts)}</span>` +
+      `</div>` +
+      `<div class="saved-nums">${nums}</div>` +
+      (withTools
+        ? `<div class="saved-tools">` +
+            `<button type="button" data-act="copy">复制</button>` +
+            `<button type="button" data-act="check">去验票</button>` +
+            `<button type="button" data-act="del" class="del">删除</button>` +
+            `<span class="hint">data/ssq.db</span>` +
+          `</div>`
+        : "");
+
+    item.querySelector('[data-act="copy"]')?.addEventListener("click", () => {
+      copyText(picks.map(p => `${p.red.map(pad).join(" ")} + ${pad(p.blue)}`).join("\n"));
+      flashNote("已复制这组推演号码");
+    });
+
+    item.querySelector('[data-act="check"]')?.addEventListener("click", () => {
+      const p = picks[0];
+      if (!p) return;
+      $("#myRed").value = p.red.map(pad).join(" ");
+      $("#myBlue").value = pad(p.blue);
+      $("#inHint").classList.remove("err");
+      const hit = ocrSelectIssue(rec.issue);
+      const sec = $("#btnCheck").closest("section");
+      if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      flashNote(hit
+        ? `已填入 ${rec.issue} 期第 1 注，去验票机点「开始验票」`
+        : `${rec.issue} 期还没开奖，已把第 1 注填进验票机`);
+    });
+
+    item.querySelector('[data-act="del"]')?.addEventListener("click", async () => {
+      try {
+        await apiSend("DELETE", "api/predictions/" + rec.id);
+        await renderSaved();
+        await refreshApiStatus();
+        if (!$("#queryResult").hidden) runQuery();
+        flashNote("已删除这条推演记录");
+      } catch (e){
+        flashNote("删除失败：" + (e.message || e));
+      }
+    });
+
+    return item;
+  }
+
+  async function runQuery(){
+    if (!apiReady){
+      flashNote("先启动本地服务（双击「启动服务.bat」）");
+      return;
+    }
+    const q = $("#qInput").value.trim();
+    if (!q){
+      flashNote("输入 7 位期号或日期，如 2026133 / 2026-11-17");
+      return;
+    }
+    try {
+      const data = await apiGet("api/query?q=" + encodeURIComponent(q));
+      renderQuery(data);
+    } catch (e){
+      const box = $("#queryResult");
+      box.hidden = false;
+      box.innerHTML = `<div class="q-note">查询失败：${e.message || e}</div>`;
+    }
+  }
+
+  function renderQuery(data){
+    const box = $("#queryResult");
+    box.hidden = false;
+    box.innerHTML = "";
+
+    const head = document.createElement("div");
+    head.className = "q-head";
+    const checkN = (data.checks || []).length;
+    head.innerHTML =
+      `<span>查询 <b>${data.query.value}</b> · 推演 ${data.items.length} 条 · 验票 ${checkN} 条</span>` +
+      `<span>${data.draw ? data.draw.issue + " 期" : "无开奖"}</span>`;
+    box.appendChild(head);
+
+    const draw = document.createElement("div");
+    draw.className = "q-draw";
+    draw.innerHTML = data.draw
+      ? `<span>开奖</span><span class="rr">${data.draw.reds.split(",").join(" ")}</span>` +
+        `<span class="bb">+ ${pad(data.draw.blue)}</span>` +
+        `<span style="color:var(--dim);font-size:10.5px">${data.draw.day}</span>`
+      : `<span class="none">没有对应的开奖记录（该期尚未开奖，或日期输入不正确）</span>`;
+    box.appendChild(draw);
+
+    if (data.items.length){
+      const list = document.createElement("div");
+      list.className = "q-list";
+      data.items.forEach(rec => list.appendChild(predCard(rec, false)));
+      box.appendChild(list);
+    } else {
+      const none = document.createElement("div");
+      none.className = "q-note";
+      none.textContent = "这个期号/日期下没有保存过推演。";
+      box.appendChild(none);
+    }
+
+    if (checkN){
+      const sub = document.createElement("div");
+      sub.className = "q-sub";
+      sub.textContent = `验票记录（${checkN}）`;
+      box.appendChild(sub);
+      const clist = document.createElement("div");
+      clist.className = "q-list";
+      data.checks.forEach(rec => clist.appendChild(checkCard(rec, false)));
+      box.appendChild(clist);
+    }
+  }
+
+  function applySnapshot(snap){
+    const picks = (snap.picks || [])
+      .filter(p => p && Array.isArray(p.red) && p.red.length === 6 &&
+                   Number.isFinite(Number(p.blue)) && Number(p.blue) >= 1 && Number(p.blue) <= 16)
+      .map(p => ({
+        red: p.red.map(Number).sort((a, b) => a - b),
+        blue: Number(p.blue)
+      }));
+    if (!picks.length) return false;
+
+    if (STRATS[snap.strat]){
+      curStrat = snap.strat;
+      document.querySelectorAll(".strat").forEach(x => x.classList.toggle("on", x.dataset.s === curStrat));
+      const cfg = STRATS[curStrat];
+      $("#betaTxt").textContent = "β = " + (cfg.beta === 0 ? "0.0" : cfg.beta.toFixed(1));
+      $("#gaugeBeta").style.width = (cfg.beta / 2.4 * 100) + "%";
+    }
+
+    if ([1, 5, 10].includes(picks.length)){
+      qty = picks.length;
+      $("#qtySeg").querySelectorAll("button").forEach(x => {
+        x.classList.toggle("on", Number(x.dataset.q) === qty);
+      });
+    }
+
+    lockRed.clear();
+    lockBlue = null;
+    if (snap.locks){
+      (snap.locks.red || []).forEach(n => { if (lockRed.size < 6) lockRed.add(Number(n)); });
+      if (snap.locks.blue) lockBlue = Number(snap.locks.blue);
+    }
+    syncLockUI();
+
+    const main = picks[0];
+    lastResult = picks;
+    lastCode = snap.code || null;
+    renderBalls(main.red, main.blue, false);
+    renderFingerprint(main.red, main.blue);
+    renderTickets(picks);
+    markMatrix(main.red, main.blue);
+    showRestoreNote(snap, picks.length);
+    return true;
+  }
+
+  function showRestoreNote(snap, count){
+    const note = $("#restoreNote");
+    if (!note) return;
+    const target = $("#targetIssue").textContent.trim();
+    const stale = snap.code && snap.code !== target;
+    const label = snap.stratLabel || (STRATS[snap.strat] && STRATS[snap.strat].label) || "";
+    note.hidden = false;
+    note.innerHTML =
+      `<span>已回显上次推演 <b>${savedTime(snap.ts)}</b> · ${snap.code || "—"} 期 · ` +
+      `${label} · ${count} 注` +
+      (stale ? ` <span class="dim">（当前目标期 ${target}）</span>` : "") + `</span>` +
+      `<button type="button" id="btnRestoreRoll">重新推演</button>`;
+    $("#btnRestoreRoll").addEventListener("click", () => roll());
+  }
+
+  function restoreLatest(){
+    const snap = readSnapshot();
+    if (!snap) return false;
+    return applySnapshot(snap);
   }
 
   /* ══════════ 5. 渲染：热力矩阵 ══════════ */
@@ -2028,6 +2488,8 @@
     });
   }
 
+  let lastCheck = null;
+
   function doCheck(){
     const hint = $("#inHint");
     const t = parseTicket();
@@ -2044,6 +2506,15 @@
     const redN = t.red.filter(x => draw.red.includes(x)).length;
     const blueHit = t.blue === draw.blue;
     const prize = prizeOf(redN, blueHit ? 1 : 0);
+    lastCheck = {
+      issue: draw.code,
+      day: draw.date,
+      reds: t.red.slice().sort((a, b) => a - b),
+      blue: t.blue,
+      prize: prize ? prize.name : "未中奖",
+      redHits: redN,
+      blueHit: blueHit ? 1 : 0
+    };
 
     // 历史战绩
     let bestR = -1, bestB = 0, bestDraw = null, blueWins = 0, sumHit = 0;
@@ -2082,6 +2553,111 @@
         这注号码在 ${N} 期历史里最好成绩：<b>${bestR} 红${bestB ? " + 1 蓝" : ""}</b>${bestDraw ? `（${bestDraw.date} · 第 ${bestDraw.code} 期）` : ""}<br>
         累计中蓝球 <b>${blueWins}</b> 次（${(blueWins / N * 100).toFixed(1)}%）· 平均命中 <b>${avgHit.toFixed(2)}</b> 个红球
       </div>`;
+  }
+
+  /* ══════════ 6b. 验票记录：本地 SQLite ══════════ */
+  async function saveCheck(){
+    if (!apiReady){
+      flashNote("先双击「启动服务.bat」，从 http://127.0.0.1:8899 打开再保存");
+      return;
+    }
+    if (!lastCheck){
+      flashNote("先点「开始验票」，再保存");
+      return;
+    }
+    const t = parseTicket();
+    if (t.err){ flashNote("号码有误，先修正再保存"); return; }
+    const draw = DRAWS[Number($("#cmpIssue").value)];
+    if (!draw || draw.code !== lastCheck.issue){
+      flashNote("期号变了，请重新验票再保存");
+      return;
+    }
+    const same = t.red.slice().sort((a, b) => a - b).join(",") === lastCheck.reds.join(",")
+      && t.blue === lastCheck.blue;
+    if (!same){
+      flashNote("号码改过了，请重新验票再保存");
+      return;
+    }
+    try {
+      const res = await apiSend("POST", "api/checks", {
+        issue: lastCheck.issue,
+        day: lastCheck.day,
+        reds: lastCheck.reds,
+        blue: lastCheck.blue,
+        prize: lastCheck.prize,
+        redHits: lastCheck.redHits,
+        blueHit: lastCheck.blueHit
+      });
+      await renderChecks();
+      await refreshApiStatus();
+      flashNote(res.duplicate
+        ? `已存在相同验票记录：${lastCheck.issue} 期`
+        : `已写入 SQLite：${lastCheck.issue} 期 · ${lastCheck.prize}`);
+    } catch (e){
+      flashNote("保存失败：" + (e.message || e));
+    }
+  }
+
+  async function renderChecks(){
+    const wrap = $("#checkList");
+    if (!wrap || !apiReady) return;
+    try {
+      const data = await apiGet("api/checks?limit=8");
+      $("#checkCount").textContent = data.total ? `${data.total} 条` : "";
+      wrap.innerHTML = "";
+      if (!data.items.length){
+        wrap.innerHTML = `<div class="saved-empty">还没有验票记录。点「开始验票」后按「保存验票」，会写进 data/ssq.db。</div>`;
+        return;
+      }
+      data.items.forEach(rec => wrap.appendChild(checkCard(rec, true)));
+    } catch (e){
+      wrap.innerHTML = `<div class="saved-empty">读取记录失败：${e.message}</div>`;
+    }
+  }
+
+  function checkCard(rec, withTools){
+    const item = document.createElement("div");
+    item.className = "saved-item";
+    const zero = !rec.redHits && !rec.blueHit;
+    item.innerHTML =
+      `<div class="saved-meta">` +
+        `<span class="code">${rec.issue} 期</span>` +
+        (rec.day ? `<span>${rec.day}</span>` : "") +
+        `<span class="mode">${rec.prize || "未中奖"}</span>` +
+        `<span class="hit${zero ? " zero" : ""}">${rec.redHits || 0} 红${rec.blueHit ? " + 蓝" : ""}</span>` +
+        `<span class="time">${rec.createdAt || savedTime(rec.ts)}</span>` +
+      `</div>` +
+      `<div class="saved-nums"><div class="saved-num">` +
+        `<span class="no">票</span>` +
+        `<span class="rr">${(rec.reds || []).map(pad).join(" ")}</span>` +
+        `<span class="bb">+ ${pad(rec.blue)}</span>` +
+      `</div></div>` +
+      (withTools
+        ? `<div class="saved-tools">` +
+            `<button type="button" data-act="copy">复制</button>` +
+            `<button type="button" data-act="del" class="del">删除</button>` +
+            `<span class="hint">data/ssq.db</span>` +
+          `</div>`
+        : "");
+
+    item.querySelector('[data-act="copy"]')?.addEventListener("click", () => {
+      copyText(`${(rec.reds || []).map(pad).join(" ")} + ${pad(rec.blue)}`);
+      flashNote("已复制这注号码");
+    });
+
+    item.querySelector('[data-act="del"]')?.addEventListener("click", async () => {
+      try {
+        await apiSend("DELETE", "api/checks/" + rec.id);
+        await renderChecks();
+        await refreshApiStatus();
+        if (!$("#queryResult").hidden) runQuery();
+        flashNote("已删除这条验票记录");
+      } catch (e){
+        flashNote("删除失败：" + (e.message || e));
+      }
+    });
+
+    return item;
   }
 
   /* ══════════ 7. 头部数据 ══════════ */
@@ -2130,6 +2706,14 @@
   });
 
   $("#btnGen").addEventListener("click", roll);
+  $("#btnSave").addEventListener("click", saveRoll);
+  $("#btnQuery").addEventListener("click", runQuery);
+  $("#btnQueryClear").addEventListener("click", () => {
+    $("#qInput").value = "";
+    $("#queryResult").hidden = true;
+    renderSaved();
+  });
+  $("#qInput").addEventListener("keydown", e => { if (e.key === "Enter") runQuery(); });
   $("#btnBacktest").addEventListener("click", backtest);
 
   $("#btnCopy").addEventListener("click", async () => {
@@ -2138,13 +2722,7 @@
       `${t.red.map(pad).join(" ")} + ${pad(t.blue)}`
     ).join("\n");
     const btn = $("#btnCopy");
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (err){
-      const ta = document.createElement("textarea");
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); ta.remove();
-    }
+    await copyText(text);
     const old = btn.textContent;
     btn.textContent = "已复制";
     setTimeout(() => btn.textContent = old, 1400);
@@ -2152,6 +2730,7 @@
 
   /* ══════════ 9. 启动 ══════════ */
   $("#btnCheck").addEventListener("click", doCheck);
+  $("#btnSaveCheck").addEventListener("click", saveCheck);
   $("#btnFillLast").addEventListener("click", () => {
     if (!lastResult || !lastResult.length) return;
     const t = lastResult[0];
@@ -2167,7 +2746,8 @@
   renderMatrix();
   bindLockEvents();
   ocrBind();
-  setTimeout(roll, 380);
+  bootApi();
+  if (!restoreLatest()) setTimeout(() => roll(true), 380);
 })();
 </script>
 </body>
