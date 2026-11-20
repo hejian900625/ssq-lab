@@ -540,6 +540,26 @@
   }
   .check-actions .btn{padding:11px 22px;font-size:12.5px;letter-spacing:.1em}
 
+  /* 保存成功浮层提醒 */
+  .toast-stack{
+    position:fixed;left:50%;bottom:30px;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    z-index:200;pointer-events:none;
+  }
+  .toast{
+    display:flex;align-items:center;gap:10px;padding:11px 18px;
+    background:#151719;border:1px solid var(--line-2);border-left:3px solid #4FAE7A;
+    color:var(--paper);font-size:12.5px;letter-spacing:.03em;
+    box-shadow:0 12px 34px rgba(0,0,0,.5);
+    animation:toastIn .22s ease-out;
+  }
+  .toast.warn{border-left-color:var(--gold)}
+  .toast .dot{width:7px;height:7px;border-radius:50%;background:#4FAE7A;flex:0 0 auto}
+  .toast.warn .dot{background:var(--gold)}
+  .toast.out{animation:toastOut .22s ease-in forwards}
+  @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes toastOut{to{opacity:0;transform:translateY(10px)}}
+
   /* OCR 上传识别 */
   .ocr-drop{
     display:flex;align-items:center;gap:13px;margin-bottom:18px;padding:13px 15px;
@@ -1527,6 +1547,10 @@
       flashNote(res.duplicate
         ? `已存在相同记录：${issue} 期 · ${label}`
         : `已写入 SQLite：${issue} 期 · ${label} · ${picks.length} 注`);
+      toast(res.duplicate
+        ? `推演记录已存在：${issue} 期 · ${label}`
+        : `推演已保存：${issue} 期 · ${label} · ${picks.length} 注`,
+        res.duplicate ? "warn" : "ok");
     } catch (e){
       flashNote("保存失败：" + (e.message || e));
     }
@@ -1815,6 +1839,31 @@
       el.style.color = "";
       updatePoolNote();
     }, 1800);
+  }
+
+  function toast(msg, kind){
+    let stack = document.getElementById("toastStack");
+    if (!stack){
+      stack = document.createElement("div");
+      stack.id = "toastStack";
+      stack.className = "toast-stack";
+      stack.setAttribute("role", "status");
+      stack.setAttribute("aria-live", "polite");
+      document.body.appendChild(stack);
+    }
+    while (stack.children.length >= 3) stack.removeChild(stack.firstChild);
+    const el = document.createElement("div");
+    el.className = "toast" + (kind === "warn" ? " warn" : "");
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const text = document.createElement("span");
+    text.textContent = msg;
+    el.append(dot, text);
+    stack.appendChild(el);
+    setTimeout(() => {
+      el.classList.add("out");
+      setTimeout(() => el.remove(), 240);
+    }, 2800);
   }
 
   function renderLocks(){
@@ -2720,11 +2769,16 @@
     return out;
   }
 
-  function ocrPrepareCanvas(img, rotation, mode){
+  function ocrPrepareCanvas(img, rotation, mode, boost){
+    const zoom = boost || 1;
     const iw = img.width || img.naturalWidth;
     const ih = img.height || img.naturalHeight;
     const minSide = Math.min(iw, ih), maxSide = Math.max(iw, ih);
-    const scale = Math.min(2.4, Math.max(1, 1400 / Math.max(1, minSide)), 2000 / Math.max(1, maxSide));
+    const scale = Math.min(
+      zoom > 1 ? 3 : 2.4,
+      Math.max(1, 1400 / Math.max(1, minSide)) * zoom,
+      (zoom > 1 ? 4000 : 2000) / Math.max(1, maxSide)
+    );
     const w = Math.max(1, Math.round(iw * scale)), h = Math.max(1, Math.round(ih * scale));
 
     let c = document.createElement("canvas");
@@ -2856,8 +2910,9 @@
   async function ocrRecognize(canvas, psm){
     const w = await ocrEnsureWorker();
     await w.setParameters({ tessedit_pageseg_mode: String(psm) });
-    const res = await w.recognize(canvas);
-    return (res && res.data && res.data.text) || "";
+    const res = await w.recognize(canvas, {}, { text: true, tsv: true });
+    const data = (res && res.data) || {};
+    return { text: data.text || "", tsv: data.tsv || "" };
   }
 
   function ocrNorm(s){
@@ -2903,6 +2958,102 @@
     return out;
   }
 
+  function ocrDigits(s){
+    return ocrNorm(s).replace(/[^\d]/g, "");
+  }
+
+  /* 一行数字里找「6 红递增 + 1 蓝」的连续 14 位；允许行首最多 4 位噪声、行尾 1 位噪声 */
+  function ocrLineBets(digits){
+    const out = [];
+    const n = digits.length;
+    if (n < 14 || n > 17) return out;
+    for (let s = 0; s <= 4 && s + 14 <= n; s++){
+      if (n - (s + 14) > 1) continue;
+      const vals = [];
+      for (let i = 0; i < 14; i += 2) vals.push(parseInt(digits.slice(s + i, s + i + 2), 10));
+      const red = vals.slice(0, 6), blue = vals[6];
+      if (!red.every(v => v >= 1 && v <= 33)) continue;
+      if (new Set(red).size !== 6) continue;
+      let inc = true;
+      for (let i = 1; i < 6; i++) if (red[i] <= red[i - 1]){ inc = false; break; }
+      if (!inc) continue;
+      if (!(blue >= 1 && blue <= 16)) continue;
+      out.push({ red: red.slice(), blue, lead: s, tail: n - (s + 14) });
+    }
+    if (out.length > 1){
+      const uniq = new Map();
+      for (const c of out) uniq.set(c.red.join(",") + "+" + c.blue, c);
+      return uniq.size === 1 ? [...uniq.values()] : [];
+    }
+    return out;
+  }
+
+  function ocrTsvLines(tsv){
+    const rows = String(tsv || "").split(/\r?\n/);
+    const words = [];
+    for (let i = 1; i < rows.length; i++){
+      const c = rows[i].split("\t");
+      if (c.length < 12 || c[0] !== "5") continue;
+      const text = ocrDigits(c[11]);
+      if (!text) continue;
+      const left = +c[6], top = +c[7], w = +c[8], h = +c[9];
+      if (!(w > 0 && h > 0)) continue;
+      words.push({ text, left, top, w, h, cy: top + h / 2 });
+    }
+    words.sort((a, b) => a.cy - b.cy || a.left - b.left);
+    const lines = [];
+    for (const wd of words){
+      let line = null;
+      for (let i = lines.length - 1; i >= 0; i--){
+        const L = lines[i];
+        const tol = Math.max(8, Math.min(L.h, wd.h) * 0.6);
+        if (Math.abs(L.cy - wd.cy) <= tol){ line = L; break; }
+      }
+      if (!line){
+        line = { words: [], top: wd.top, bottom: wd.top + wd.h, h: wd.h, cy: wd.cy };
+        lines.push(line);
+      }
+      line.words.push(wd);
+      line.top = Math.min(line.top, wd.top);
+      line.bottom = Math.max(line.bottom, wd.top + wd.h);
+      line.cy = (line.top + line.bottom) / 2;
+      line.h = Math.max(line.h, wd.h);
+    }
+    lines.forEach(L => L.words.sort((a, b) => a.left - b.left));
+    return lines.sort((a, b) => a.top - b.top);
+  }
+
+  /* 同一视觉行里的 word 可能互相重叠，给出「不裁 / 裁 1 位」几种拼接结果 */
+  function ocrLineTexts(line){
+    const ws = line.words;
+    if (!ws.length) return [];
+    if (ws.length === 1 || ws.length > 3) return [ws.map(w => w.text).join("")];
+    const out = new Set();
+    const walk = (i, acc) => {
+      if (i >= ws.length){ out.add(acc); return; }
+      const cur = ws[i], prev = ws[i - 1];
+      walk(i + 1, acc + cur.text);
+      if (prev && prev.left + prev.w - cur.left > 5 && cur.text.length > 1){
+        walk(i + 1, acc + cur.text.slice(1));
+      }
+    };
+    walk(0, "");
+    return [...out];
+  }
+
+  function ocrParseTsv(tsv, text){
+    const out = [];
+    ocrTsvLines(tsv).forEach((line, li) => {
+      for (const s of ocrLineTexts(line)){
+        const found = ocrLineBets(s);
+        if (!found.length) continue;
+        found.forEach(c => out.push({ ...c, seq: li, score: 130, bet: 1, clean: true }));
+        break;
+      }
+    });
+    return { candidates: out, issue: ocrFindIssue(text || ""), raw: "" };
+  }
+
   function ocrScan(tokens, allowUnsorted){
     const out = [];
     for (let i = 0; i + 6 < tokens.length; i++){
@@ -2937,11 +3088,18 @@
 
   function ocrFindIssue(text){
     const t = ocrNorm(text);
-    let m = t.match(/第\s*(\d{7})\s*期/);
-    if (m && DRAWS.some(d => d.code === m[1])) return m[1];
-    const re = /(20\d{5})(?!\d)/g;
-    while ((m = re.exec(t)) !== null){
-      if (DRAWS.some(d => d.code === m[1])) return m[1];
+    const compact = t.replace(/[^\d]/g, "");
+    if (!compact) return null;
+    const recent = DRAWS;
+    const dates = new Set(recent.map(d => d.date));
+    for (const m of compact.matchAll(/(20\d{2})(\d{2})(\d{2})/g)){
+      const day = `${m[1]}-${m[2]}-${m[3]}`;
+      if (!dates.has(day)) continue;
+      const hit = recent.find(d => d.date === day);
+      if (hit) return hit.code;
+    }
+    for (const d of recent){
+      if (compact.includes(d.code)) return d.code;
     }
     return null;
   }
@@ -2954,14 +3112,54 @@
     return false;
   }
 
+  function ocrCleanBet(tokens){
+    const build = start => {
+      if (tokens.length < start + 7) return null;
+      const red = tokens.slice(start, start + 6).map(t => t.v);
+      const blue = tokens[start + 6].v;
+      if (!red.every(v => v >= 1 && v <= 33)) return null;
+      if (new Set(red).size !== 6) return null;
+      if (!(blue >= 1 && blue <= 16)) return null;
+      for (let i = 1; i < 6; i++) if (red[i] <= red[i - 1]) return null;
+      return { red: red.slice(), blue, score: 120, sorted: true, bet: 1, clean: true };
+    };
+
+    if (tokens.length === 8 && tokens[0].v >= 1 && tokens[0].v <= 9){
+      const withNo = build(1);
+      if (withNo) return withNo;
+    }
+    if (tokens.length === 7) return build(0);
+    if (tokens.length === 8) return build(0);
+    return null;
+  }
+
   function ocrParseText(text){
     const norm = ocrNorm(text);
     const issue = ocrFindIssue(norm);
     const lines = norm.split(/\r?\n/);
+    const lineToks = lines.map(line => ocrTokens(line));
     const all = [];
 
+    const clean = [];
+    lineToks.forEach((toks, li) => {
+      const byDigits = ocrLineBets(ocrDigits(lines[li]));
+      if (byDigits.length){
+        byDigits.forEach(c => clean.push({ ...c, seq: li, score: 125, bet: 1, clean: true }));
+        return;
+      }
+      const c = ocrCleanBet(toks);
+      if (c){ c.seq = li; clean.push(c); }
+    });
+    if (clean.length){
+      return {
+        candidates: clean.sort((a, b) => a.seq - b.seq),
+        issue,
+        raw: String(text || "").trim()
+      };
+    }
+
     lines.forEach((line, li) => {
-      const toks = ocrTokens(line);
+      const toks = lineToks[li];
       if (toks.length < 7) return;
       const kw = /双色|红球|蓝球|开奖|期/.test(line) ? 1 : 0;
       const isBet = ocrIsBetLine(line);
@@ -3083,10 +3281,30 @@
   }
 
   function ocrHandleText(input){
-    const texts = (Array.isArray(input) ? input : [input]).map(t => String(t || "")).filter(t => t.trim());
-    const parses = texts.length ? texts.map(t => ocrParseText(t)) : [ocrParseText("")];
-    const raw = texts.join("\n").trim();
-    const candidates = ocrMergeParses(parses);
+    const items = Array.isArray(input) ? input : [input];
+    const parses = [], raws = [];
+    items.forEach(it => {
+      if (it && typeof it === "object"){
+        const text = String(it.text || "");
+        raws.push(text);
+        const byTsv = ocrParseTsv(it.tsv || "", text);
+        parses.push(byTsv.candidates.length ? byTsv : ocrParseText(text));
+        return;
+      }
+      const text = String(it || "");
+      if (!text.trim()) return;
+      raws.push(text);
+      parses.push(ocrParseText(text));
+    });
+    if (!parses.length) parses.push(ocrParseText(""));
+    const raw = raws.join("\n").trim();
+    const merged = ocrMergeParses(parses);
+    const clean = merged.filter(c => c.clean);
+    const candidates = (clean.length ? clean : merged)
+      .slice()
+      .sort((a, b) => b.score - a.score || a.seq - b.seq)
+      .slice(0, 12)
+      .sort((a, b) => a.seq - b.seq || b.score - a.score);
     const issue = parses.map(p => p.issue).find(Boolean) || null;
     $("#ocrRaw").textContent = raw || "（没有识别到文字）";
     $("#ocrRawBox").hidden = !raw;
@@ -3115,25 +3333,29 @@
       ocrState("加载识别引擎…", 12);
       await ocrEnsureWorker();
       if (run !== ocrRun) return;
-      const texts = [];
+      const passes = [];
       ocrState("识别票面文字…", 55);
       const gray = ocrPrepareCanvas(ocrSource, ocrRotation, "gray");
-      texts.push(await ocrRecognize(gray, 4));
+      passes.push(await ocrRecognize(gray, 4));
       if (run !== ocrRun) return;
 
-      ocrState("增强识别：去除圆圈后重试…", 72);
+      ocrState("增强识别：去除圆圈后重试…", 68);
       const bin = ocrPrepareCanvas(ocrSource, ocrRotation, "binary");
       ocrRemoveRings(bin);
-      texts.push(await ocrRecognize(bin, 4));
+      passes.push(await ocrRecognize(bin, 4));
       if (run !== ocrRun) return;
 
-      let parsed = ocrParseText(texts.join("\n"));
-      if (!parsed.candidates.length){
+      ocrState("放大票面复核号码…", 80);
+      const big = ocrPrepareCanvas(ocrSource, ocrRotation, "gray", 2);
+      passes.push(await ocrRecognize(big, 4));
+      if (run !== ocrRun) return;
+
+      if (!passes.some(p => ocrParseTsv(p.tsv, p.text).candidates.length)){
         ocrState("再试一次分行识别…", 90);
-        texts.push(await ocrRecognize(bin, 6));
+        passes.push(await ocrRecognize(bin, 6));
         if (run !== ocrRun) return;
       }
-      ocrHandleText(texts);
+      ocrHandleText(passes);
     } catch (e){
       console.error(e);
       ocrState("识别失败：首次使用需联网加载 OCR 引擎；也可手动输入号码", 100, "err");
@@ -3385,6 +3607,10 @@
       flashNote(res.duplicate
         ? `已存在相同验票记录：${lastCheck.issue} 期`
         : `已写入 SQLite：${lastCheck.issue} 期 · ${lastCheck.prize}`);
+      toast(res.duplicate
+        ? `验票记录已存在：${lastCheck.issue} 期`
+        : `验票已保存：${lastCheck.issue} 期 · ${lastCheck.prize}`,
+        res.duplicate ? "warn" : "ok");
     } catch (e){
       flashNote("保存失败：" + (e.message || e));
     }
