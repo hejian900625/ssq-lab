@@ -111,6 +111,16 @@
   /* ───────── 主体面板 ───────── */
   section{margin-top:34px}
 
+  /* ───────── 三步实验分组 ───────── */
+  .stage-band{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    margin:54px 0 -4px;padding-bottom:11px;border-bottom:1px solid var(--line-2);
+  }
+  .stage-band:first-of-type{margin-top:12px}
+  .stage-band .no{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--red-lit)}
+  .stage-band h3{font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:.08em;color:var(--paper)}
+  .stage-band p{flex:1 1 340px;min-width:0;font-size:11px;color:var(--dim);line-height:1.7}
+
   .block-head{
     display:flex;align-items:baseline;gap:14px;margin-bottom:18px;
   }
@@ -700,6 +710,8 @@
     .block-head{flex-wrap:wrap;row-gap:5px}
     .block-head h2{font-size:20px}
     .block-head .note{margin-left:0;width:100%;order:3;font-size:10.5px}
+    .stage-band{margin-top:40px;gap:5px 12px}
+    .stage-band p{flex-basis:100%}
   }
   @media (max-width:560px){
     .wrap{padding:0 16px 60px}
@@ -759,10 +771,210 @@
     </dl>
   </div>
 
-  <!-- 推演台 -->
+  <!-- 实验一：看见随机 -->
+  <div class="stage-band">
+    <span class="no">实验 01</span>
+    <h3>看见随机</h3>
+    <p>先用 3530 期开奖把“随机”摊开：最近 120 期四种策略逐期盲推，再和随机期望比一比。</p>
+  </div>
+
+  <!-- 回测 -->
   <section>
     <div class="block-head">
       <span class="idx">01</span>
+      <h2>算法体检</h2>
+      <span class="note">打开页面自动回测 · 四策略 · 最近 120 期</span>
+    </div>
+
+    <div class="lab-grid">
+      <div class="lab-cell">
+        <h4>Red Ball Hit Rate / 红球平均命中</h4>
+        <div class="bt-current" id="btCurrent">正在自动回测最近 120 期…</div>
+        <div class="big-stat">
+          <span class="v" id="btRed">—</span><span class="u">个 / 期</span>
+        </div>
+        <div class="vs-line">
+          <span>纯随机期望 <b>1.09</b></span>
+          <span id="btRedCi">95% CI —</span>
+        </div>
+        <div class="bars" id="btBars"></div>
+        <div style="margin-top:20px">
+          <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">重跑四策略回测</button>
+        </div>
+      </div>
+
+      <div class="lab-cell">
+        <h4>Verdict / 结论</h4>
+        <div class="big-stat">
+          <span class="v" id="btBlue" style="color:#93BFEF">—</span><span class="u">蓝球命中率</span>
+        </div>
+        <div class="vs-line">
+          <span>理论概率 <b>6.25%</b></span>
+          <span id="btBlueCi">95% CI —</span>
+        </div>
+        <div class="vs-line" style="border-top:0;padding-top:4px;margin-top:4px">
+          <span>相对随机</span>
+          <span id="btGap">—</span>
+        </div>
+        <div class="verdict" id="verdict">
+          页面打开即自动在同一批最近 120 期上把四种策略各跑一遍：
+          每一期都只用它<strong>之前</strong>的数据推演，再与真实开奖逐期比对。<br><br>
+          每种策略给出 95% 置信区间和固定奖回收；区间覆盖随机期望，就说明差异不显著。<br><br>
+          结果大概率平平无奇——这正是重点。
+        </div>
+      </div>
+    </div>
+
+    <div class="bt-compare">
+      <div class="bt-compare-head">
+        <h4>Four Strategies / 四策略对比</h4>
+        <span id="btMeta">最近 120 期 · 每期 1 注 · 成本 ¥2/注</span>
+      </div>
+      <div class="bt-scroll">
+        <table class="bt-table">
+          <thead>
+            <tr>
+              <th>策略</th>
+              <th>红球均值（95% CI）</th>
+              <th>蓝球命中率（95% CI）</th>
+              <th>相对随机</th>
+              <th>最高</th>
+              <th>固定奖回收</th>
+              <th>结论</th>
+            </tr>
+          </thead>
+          <tbody id="btBody">
+            <tr><td colspan="7" class="bt-empty">正在自动回测：四种策略会在同一批 120 期上各跑一遍…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bt-foot">
+        成本按 <b>2 元/注</b> 计算；固定奖按三等奖 3,000、四等奖 200、五等奖 10、六等奖 5 元计算。
+        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。置信区间为 95%，覆盖随机期望即视为差异不显著。
+        「纯随机构造」是对照组，它同样可能因抽样波动落在区间外——这正是 120 期样本不能当结论的原因。
+      </div>
+    </div>
+  </section>
+
+  <!-- 热力矩阵 -->
+  <section>
+    <div class="block-head">
+      <span class="idx">02</span>
+      <h2>号码热力矩阵</h2>
+      <span class="note">点击格子锁定为胆码 · 上：出现次数 · 下：当前遗漏</span>
+    </div>
+
+    <div class="matrix-grid">
+      <div>
+        <div class="grid-33" id="gridRed"></div>
+      </div>
+      <div>
+        <div class="grid-16" id="gridBlue"></div>
+        <div class="legend">
+          <span><i style="background:rgba(200,22,30,.65)"></i>高于均值</span>
+          <span><i style="background:rgba(90,120,160,.45)"></i>低于均值</span>
+          <span><i style="border:1px solid var(--red-lit);background:transparent"></i>本期推演选中</span>
+          <span><i style="outline:1px solid var(--gold);outline-offset:-1px;background:transparent"></i>已锁胆码</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 实验二：检验策略 -->
+  <div class="stage-band">
+    <span class="no">实验 02</span>
+    <h3>检验策略</h3>
+    <p>四策略已经给出答案；这一节让预测函数从第 101 期起逐期自我修正，看它能不能跑出统计显著。</p>
+  </div>
+
+  <!-- 自进化预测 -->
+  <section id="evolve">
+    <div class="block-head">
+      <span class="idx">03</span>
+      <h2>自进化预测</h2>
+      <span class="note">最早 100 期起步 · 逐期修正 · 输出下一期</span>
+    </div>
+
+    <div class="evo-panel">
+      <div class="evo-top">
+        <div class="evo-next">
+          <div class="evo-label">Next Issue / 下一期预测</div>
+          <div class="evo-issue" id="evoIssue">计算中…</div>
+          <div class="evo-balls" id="evoBalls">
+            <span class="empty">正在用最早 100 期建立初始函数，随后逐期预测、对照、修正…</span>
+          </div>
+          <div class="evo-actions" id="evoActions" hidden>
+            <button class="btn ghost" id="btnEvoCopy" type="button">复制号码</button>
+            <button class="btn ghost" id="btnEvoFill" type="button">填入验票机</button>
+          </div>
+        </div>
+        <div class="evo-run">
+          <button class="btn" id="btnEvolve" type="button">重跑自进化</button>
+          <div class="evo-progress" id="evoProgress">正在建立初始函数…<br>预测 → 对照 → 修正，直到最新一期</div>
+        </div>
+      </div>
+
+      <div class="evo-metrics">
+        <div class="evo-metric">
+          <div class="k">Walk-forward 红球均值</div>
+          <div class="v" id="evoRed">—</div>
+          <div class="s">随机期望 1.09</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">蓝球命中率</div>
+          <div class="v" id="evoBlue">—</div>
+          <div class="s">理论 6.25%</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">最高单期</div>
+          <div class="v" id="evoBest">—</div>
+          <div class="s">6 个红球封顶</div>
+        </div>
+        <div class="evo-metric">
+          <div class="k">进化步数</div>
+          <div class="v" id="evoSteps">—</div>
+          <div class="s" id="evoRange">—</div>
+        </div>
+      </div>
+
+      <div class="evo-chart-box">
+        <div class="evo-chart-head">
+          <span>Evolution Curve / 滚动 100 期红球均值</span>
+          <span>虚线 = 随机期望 1.09</span>
+        </div>
+        <div class="evo-chart" id="evoChart">
+          <div style="display:grid;place-items:center;height:100%;font-size:10.5px;color:var(--dim)">正在生成进化曲线…</div>
+        </div>
+      </div>
+
+      <div class="evo-weights-box">
+        <div class="evo-chart-head">
+          <span>Final Function / 最终号码函数权重</span>
+          <span>f(x) = Σ w · p(x)</span>
+        </div>
+        <div class="evo-weights" id="evoWeights">
+          <div class="evo-wtitle">正在计算最终函数权重…</div>
+        </div>
+      </div>
+
+      <div class="evo-note" id="evoNote">
+        每期都先给出预测，再用该期真实开奖修正权重，下一期重新计算；全程不使用未来数据。
+        双色球开奖独立随机，这里的进化只代表模型在拟合历史，不代表能预测未来。
+      </div>
+    </div>
+  </section>
+
+  <!-- 实验三：自己动手 -->
+  <div class="stage-band">
+    <span class="no">实验 03</span>
+    <h3>自己动手</h3>
+    <p>工具不是入口，是验证手段：用推演和验票，把上面的结论亲手复核一遍。</p>
+  </div>
+
+  <!-- 推演台 -->
+  <section>
+    <div class="block-head">
+      <span class="idx">04</span>
       <h2>号码推演</h2>
       <span class="note" id="poolNote">—</span>
     </div>
@@ -847,112 +1059,10 @@
     </div>
   </section>
 
-  <!-- 热力矩阵 -->
-  <section>
-    <div class="block-head">
-      <span class="idx">02</span>
-      <h2>号码热力矩阵</h2>
-      <span class="note">点击格子锁定为胆码 · 上：出现次数 · 下：当前遗漏</span>
-    </div>
-
-    <div class="matrix-grid">
-      <div>
-        <div class="grid-33" id="gridRed"></div>
-      </div>
-      <div>
-        <div class="grid-16" id="gridBlue"></div>
-        <div class="legend">
-          <span><i style="background:rgba(200,22,30,.65)"></i>高于均值</span>
-          <span><i style="background:rgba(90,120,160,.45)"></i>低于均值</span>
-          <span><i style="border:1px solid var(--red-lit);background:transparent"></i>本期推演选中</span>
-          <span><i style="outline:1px solid var(--gold);outline-offset:-1px;background:transparent"></i>已锁胆码</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 回测 -->
-  <section>
-    <div class="block-head">
-      <span class="idx">03</span>
-      <h2>算法体检</h2>
-      <span class="note">样本外回测 · 四策略 · 最近 120 期</span>
-    </div>
-
-    <div class="lab-grid">
-      <div class="lab-cell">
-        <h4>Red Ball Hit Rate / 红球平均命中</h4>
-        <div class="bt-current" id="btCurrent">尚未运行 · 点击下方按钮开始</div>
-        <div class="big-stat">
-          <span class="v" id="btRed">—</span><span class="u">个 / 期</span>
-        </div>
-        <div class="vs-line">
-          <span>纯随机期望 <b>1.09</b></span>
-          <span id="btRedCi">95% CI —</span>
-        </div>
-        <div class="bars" id="btBars"></div>
-        <div style="margin-top:20px">
-          <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">运行四策略回测</button>
-        </div>
-      </div>
-
-      <div class="lab-cell">
-        <h4>Verdict / 结论</h4>
-        <div class="big-stat">
-          <span class="v" id="btBlue" style="color:#93BFEF">—</span><span class="u">蓝球命中率</span>
-        </div>
-        <div class="vs-line">
-          <span>理论概率 <b>6.25%</b></span>
-          <span id="btBlueCi">95% CI —</span>
-        </div>
-        <div class="vs-line" style="border-top:0;padding-top:4px;margin-top:4px">
-          <span>相对随机</span>
-          <span id="btGap">—</span>
-        </div>
-        <div class="verdict" id="verdict">
-          点击「运行四策略回测」，会在同一批最近 120 期上把四种策略各跑一遍：
-          每一期都只用它<strong>之前</strong>的数据推演，再与真实开奖逐期比对。<br><br>
-          每种策略给出 95% 置信区间和固定奖回收；区间覆盖随机期望，就说明差异不显著。<br><br>
-          结果大概率平平无奇——这正是重点。
-        </div>
-      </div>
-    </div>
-
-    <div class="bt-compare">
-      <div class="bt-compare-head">
-        <h4>Four Strategies / 四策略对比</h4>
-        <span id="btMeta">最近 120 期 · 每期 1 注 · 成本 ¥2/注</span>
-      </div>
-      <div class="bt-scroll">
-        <table class="bt-table">
-          <thead>
-            <tr>
-              <th>策略</th>
-              <th>红球均值（95% CI）</th>
-              <th>蓝球命中率（95% CI）</th>
-              <th>相对随机</th>
-              <th>最高</th>
-              <th>固定奖回收</th>
-              <th>结论</th>
-            </tr>
-          </thead>
-          <tbody id="btBody">
-            <tr><td colspan="7" class="bt-empty">点击上方「运行四策略回测」，四种策略会在同一批 120 期上各跑一遍。</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="bt-foot">
-        成本按 <b>2 元/注</b> 计算；固定奖按三等奖 3,000、四等奖 200、五等奖 10、六等奖 5 元计算。
-        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。置信区间为 95%，覆盖随机期望即视为差异不显著。
-        「纯随机构造」是对照组，它同样可能因抽样波动落在区间外——这正是 120 期样本不能当结论的原因。
-      </div>
-    </div>
-  </section>
-
   <!-- 验票机 -->
   <section>
     <div class="block-head">
-      <span class="idx">04</span>
+      <span class="idx">05</span>
       <h2>验票机</h2>
       <span class="note">输入你自己的一注，逐球比对</span>
     </div>
@@ -1022,83 +1132,6 @@
         <div class="result-box" id="checkResult">
           <div class="in-hint">输入号码后点击「开始验票」。<br>可以选任意一期历史开奖来对照，也可以看看这注号码在全部 <span id="hintCount">—</span> 期里最好的战绩。</div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 自进化预测 -->
-  <section id="evolve">
-    <div class="block-head">
-      <span class="idx">05</span>
-      <h2>自进化预测</h2>
-      <span class="note">最早 100 期起步 · 逐期修正 · 输出下一期</span>
-    </div>
-
-    <div class="evo-panel">
-      <div class="evo-top">
-        <div class="evo-next">
-          <div class="evo-label">Next Issue / 下一期预测</div>
-          <div class="evo-issue" id="evoIssue">尚未运行</div>
-          <div class="evo-balls" id="evoBalls">
-            <span class="empty">点击右侧「运行自进化」，从最早 100 期开始逐期预测、对照、修正。</span>
-          </div>
-          <div class="evo-actions" id="evoActions" hidden>
-            <button class="btn ghost" id="btnEvoCopy" type="button">复制号码</button>
-            <button class="btn ghost" id="btnEvoFill" type="button">填入验票机</button>
-          </div>
-        </div>
-        <div class="evo-run">
-          <button class="btn" id="btnEvolve" type="button">运行自进化</button>
-          <div class="evo-progress" id="evoProgress">起始：最早 100 期<br>预测 → 对照 → 修正，直到最新一期</div>
-        </div>
-      </div>
-
-      <div class="evo-metrics">
-        <div class="evo-metric">
-          <div class="k">Walk-forward 红球均值</div>
-          <div class="v" id="evoRed">—</div>
-          <div class="s">随机期望 1.09</div>
-        </div>
-        <div class="evo-metric">
-          <div class="k">蓝球命中率</div>
-          <div class="v" id="evoBlue">—</div>
-          <div class="s">理论 6.25%</div>
-        </div>
-        <div class="evo-metric">
-          <div class="k">最高单期</div>
-          <div class="v" id="evoBest">—</div>
-          <div class="s">6 个红球封顶</div>
-        </div>
-        <div class="evo-metric">
-          <div class="k">进化步数</div>
-          <div class="v" id="evoSteps">—</div>
-          <div class="s" id="evoRange">—</div>
-        </div>
-      </div>
-
-      <div class="evo-chart-box">
-        <div class="evo-chart-head">
-          <span>Evolution Curve / 滚动 100 期红球均值</span>
-          <span>虚线 = 随机期望 1.09</span>
-        </div>
-        <div class="evo-chart" id="evoChart">
-          <div style="display:grid;place-items:center;height:100%;font-size:10.5px;color:var(--dim)">运行后生成进化曲线</div>
-        </div>
-      </div>
-
-      <div class="evo-weights-box">
-        <div class="evo-chart-head">
-          <span>Final Function / 最终号码函数权重</span>
-          <span>f(x) = Σ w · p(x)</span>
-        </div>
-        <div class="evo-weights" id="evoWeights">
-          <div class="evo-wtitle">运行后显示最终函数权重</div>
-        </div>
-      </div>
-
-      <div class="evo-note" id="evoNote">
-        每期都先给出预测，再用该期真实开奖修正权重，下一期重新计算；全程不使用未来数据。
-        双色球开奖独立随机，这里的进化只代表模型在拟合历史，不代表能预测未来。
       </div>
     </div>
   </section>
@@ -2050,7 +2083,7 @@ window.SSQ_RAW = "2026133|2026-11-19|07,10,11,14,21,26|13;2026132|2026-11-17|05,
       renderBtDetail();
       renderBtVerdict();
       btn.disabled = false;
-      btn.textContent = "重新运行回测";
+      btn.textContent = "重跑四策略回测";
     }
 
     function run(){
@@ -2499,7 +2532,7 @@ window.SSQ_RAW = "2026133|2026-11-19|07,10,11,14,21,26|13;2026132|2026-11-17|05,
     evoBusy = false;
     const btn = $("#btnEvolve");
     btn.disabled = false;
-    btn.textContent = "重新运行";
+    btn.textContent = "重跑自进化";
   }
 
   function renderEvolution(res){
@@ -3784,6 +3817,8 @@ window.SSQ_RAW = "2026133|2026-11-19|07,10,11,14,21,26|13;2026132|2026-11-17|05,
   bindLockEvents();
   ocrBind();
   bootApi();
+  setTimeout(() => { if (!btResults) backtest(); }, 520);
+  setTimeout(() => { if (!evoResult) runEvolution(); }, 1200);
   if (!restoreLatest()) setTimeout(() => roll(true), 380);
 })();
 </script>
