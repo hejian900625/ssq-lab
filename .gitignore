@@ -12,3 +12,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 构建产物（P1 #15）：发版时再产出，不进版本库
+dist/
+*.zip
+双色球概率实验室-单文件版.html
+
+# 过期备份
+index.backup.html
