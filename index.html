@@ -812,8 +812,15 @@
           <span id="btRedCi">95% CI —</span>
         </div>
         <div class="bars" id="btBars"></div>
-        <div style="margin-top:20px">
+        <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">重跑四策略回测</button>
+          <label style="display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim)">
+            随机种子
+            <input id="btSeed" type="text" inputmode="numeric" value="20261124" maxlength="10"
+              title="同一种子 + 同一批数据 = 同一结果；留空则用默认种子"
+              style="width:94px;background:rgba(255,255,255,.03);border:1px solid var(--line-2);color:var(--paper);font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 10px;outline:none;text-align:center">
+          </label>
+          <span style="font-size:10px;color:var(--dim);line-height:1.7">同种子结果固定<br>四策略同期共用随机流</span>
         </div>
       </div>
 
@@ -1265,6 +1272,21 @@
     return out;
   }
 
+  /* 可复现随机源：mulberry32，同一种子给出同一串 [0,1) 均匀数 */
+  function mulberry32(seed){
+    let a = seed >>> 0;
+    return function(){
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* 当前随机源：推演默认真随机，回测期间临时换成固定种子 */
+  let curRng = Math.random;
+
   /* 加权无放回抽取 */
   function sample(pool, weights, k){
     const avail = pool.slice();
@@ -1272,7 +1294,7 @@
     while (res.length < k && avail.length){
       let total = 0;
       for (const x of avail) total += weights[x];
-      let r = Math.random() * total;
+      let r = curRng() * total;
       let idx = avail.length - 1;
       for (let i = 0; i < avail.length; i++){
         r -= weights[avail[i]];
@@ -1300,7 +1322,7 @@
       const s = sc[x];
       const comp = cfg.hot * s.hot + cfg.due * s.due + cfg.recent * s.recent;
       // 微扰：让同一策略每次结果不完全相同
-      const jitter = 1 + (jitterFn ? jitterFn(x) : (Math.random() - 0.5)) * 0.22;
+      const jitter = 1 + (jitterFn ? jitterFn(x) : (curRng() - 0.5)) * 0.22;
       w[x] = cfg.beta === 0 ? 1 : Math.exp(cfg.beta * comp) * jitter;
     }
     return w;
@@ -2011,7 +2033,22 @@
   const BT_PRIZE = { 1:0, 2:0, 3:3000, 4:200, 5:10, 6:5 };
   const BT_KEYS = Object.keys(STRATS);
   let btResults = null;
+  let btStatCache = null;      // 缓存已算过统计量的那次 btResults
+  let btPureRedMean = 0;       // 「纯随机构造」的红球命中均值，作置换检验基准
   let btViewKey = "hot";
+  const BT_SEED_DEFAULT = 20261124;
+
+  /* 回测种子：输入框留空或非法时退回默认种子 */
+  function btSeed(){
+    const el = $("#btSeed");
+    const v = parseInt(el ? el.value : "", 10);
+    return Number.isFinite(v) ? (v >>> 0) : BT_SEED_DEFAULT;
+  }
+
+  /* 每期种子：同一期的四个策略都从它重置，实现共同随机数 */
+  function btPeriodSeed(base, i){
+    return (base + Math.imul(i, 0x9E3779B1)) >>> 0;
+  }
 
   function meanCi(sum, sumSq, n){
     const mean = sum / n;
@@ -2163,12 +2200,12 @@
       `<b>本样本最小可检出效应（80% 把握度）红 ±${m.red.toFixed(2)} 个 / 蓝 ±${(m.blue * 100).toFixed(1)}pp</b>`;
   }
 
-  // 统计结果缓存：finish() 每次写入全新的 btResults 对象，无需担心跨回测复用。
+  // 统计结果缓存：finish() 每次写入全新的 btResults 对象，按对象身份判断是否已算过。
   function ensureBtStats(){
-    if (!btResults || btResults.__btStatsReady) return;
+    if (!btResults || btStatCache === btResults) return;
     const B = BT_N > 600 ? 800 : 2000;
     const pureMean = btDistMean(btResults.pure.hitDist);
-    btResults.__btPureRedMean = pureMean;
+    btPureRedMean = pureMean;
     BT_KEYS.forEach(k => {
       const r = btResults[k];
       r.stat = {
@@ -2187,7 +2224,7 @@
       s.sigRed = qRed[i] < 0.05;
       s.sigBlue = qBlue[i] < 0.05;
     });
-    btResults.__btStatsReady = true;
+    btStatCache = btResults;
     updateBtWindowTip();
   }
 
@@ -2211,13 +2248,17 @@
       };
     });
     const statsCache = new Array(BT_N);
+    const seed = btSeed();
     let i = 0;
 
     // DRAWS[i] 为待测期，只能用 DRAWS[i+1..] 的数据
     function stepOnce(){
       const S = statsCache[i] || (statsCache[i] = statsOf(DRAWS, i + 1));
       const actual = DRAWS[i];
+      const periodSeed = btPeriodSeed(seed, i);
       for (const k of BT_KEYS){
+        // 共同随机数：同期四个策略各自从同一条随机流开始，差异只来自权重
+        curRng = mulberry32(periodSeed);
         const g = generate(S, k, null);
         let hit = 0;
         for (let t = 0; t < 6; t++) if (actual.red.indexOf(g.red[t]) >= 0) hit++;
@@ -2234,6 +2275,7 @@
           a.fixed += BT_PRIZE[tier] || 0;
         }
       }
+      curRng = Math.random;   // 回测片间/结束后「开始推演」仍是真随机
       i++;
     }
 
@@ -2294,7 +2336,7 @@
       const redDiff = r.red.mean - BT_RED_EXPECT;
       const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
       const bothFlat = !s.sigRed && !s.sigBlue;
-      const anyAbove = (s.sigRed && r.red.mean > btResults.__btPureRedMean) ||
+      const anyAbove = (s.sigRed && r.red.mean > btPureRedMean) ||
                        (s.sigBlue && r.blueP > BT_BLUE_EXPECT);
       const verdict = bothFlat ? "校正后无差异" : anyAbove ? "校正后偏高" : "校正后偏低";
       const vClass = bothFlat ? "sig-flat" : anyAbove ? "sig-above" : "sig-below";
