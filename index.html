@@ -372,6 +372,18 @@
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.08em;margin-top:14px}
   .legend i{display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px}
 
+  /* ───────── 热度说明（P0-5：z 分数 + 经验贝叶斯收缩） ───────── */
+  .heat-note{
+    margin-top:24px;border-top:1px dashed var(--line-2);padding-top:18px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .heat-line{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:start;font-size:12px;line-height:1.7;color:var(--muted)}
+  .heat-line .hk{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;padding-top:4px}
+  .heat-line b{color:var(--paper-dim);font-weight:600}
+  @media (max-width:560px){
+    .heat-line{grid-template-columns:1fr;gap:2px}
+  }
+
   /* ───────── 胆码 ───────── */
   .lock-row{
     display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-top:20px;
@@ -899,7 +911,7 @@
     <div class="block-head">
       <span class="idx">02</span>
       <h2>号码热力矩阵</h2>
-      <span class="note">点击格子锁定为胆码 · 上：出现次数 · 下：当前遗漏</span>
+      <span class="note">格子里的数字是 z 分数（相对随机期望的标准差）· 点击格子锁定为胆码</span>
     </div>
 
     <div class="matrix-grid">
@@ -909,13 +921,15 @@
       <div>
         <div class="grid-16" id="gridBlue"></div>
         <div class="legend">
-          <span><i style="background:rgba(200,22,30,.65)"></i>高于均值</span>
-          <span><i style="background:rgba(90,120,160,.45)"></i>低于均值</span>
+          <span><i style="background:rgba(200,22,30,.65)"></i>z &gt; 0 高于随机期望</span>
+          <span><i style="background:rgba(90,120,160,.45)"></i>z &lt; 0 低于随机期望</span>
           <span><i style="border:1px solid var(--red-lit);background:transparent"></i>本期推演选中</span>
           <span><i style="outline:1px solid var(--gold);outline-offset:-1px;background:transparent"></i>已锁胆码</span>
         </div>
       </div>
     </div>
+
+    <div class="heat-note" id="heatNote"></div>
   </section>
 
   <!-- 实验二：检验策略 -->
@@ -1073,7 +1087,7 @@
         <div class="strategies" id="strategies">
           <button class="strat on" data-s="hot">
             <span class="nm">热号追踪 <i>HOT</i></span>
-            <span class="ds">跟随历史高频号码，近 30 期趋势加权最重</span>
+            <span class="ds">按经验贝叶斯收缩后的 z 分数跟随相对高频号码，±3σ 内视为噪声</span>
           </button>
           <button class="strat" data-s="due">
             <span class="nm">遗漏回补 <i>DUE</i></span>
@@ -1081,7 +1095,7 @@
           </button>
           <button class="strat" data-s="balance">
             <span class="nm">均衡混合 <i>MIX</i></span>
-            <span class="ds">热度、遗漏、近期各占一份权重</span>
+            <span class="ds">z 分数（已收缩）、遗漏、近期各占一份权重</span>
           </button>
           <button class="strat" data-s="pure">
             <span class="nm">纯随机构造 <i>RNG</i></span>
@@ -1245,29 +1259,81 @@
     return { n, fR, fB, gapR, gapB, recR, recB, W };
   }
 
-  /* 归一化评分：热(0-1) / 遗漏(0-1) / 近期(0-1) */
+  /* ══════════ 1b. 冷热号：z 分数 + 经验贝叶斯收缩（P0-5） ══════════
+     旧实现把频次做 min–max 归一化再喂给 exp(beta·comp)：min–max 会强行把
+     这份样本里的极值拉到 0 和 1，纯噪声也能造出 e^4.2≈67 倍的权重差。
+     现在改成「相对随机期望的 z 分数」：
+       z  = (f[x] − N·p) / √(N·p(1−p))     p = 6/33（红）/ 1/16（蓝）
+       z̃  = k·z,  k = τ̂²/(τ̂²+1)            经验贝叶斯向 0 收缩
+       hot = 0.5 + 0.5·z̃/3                 ±3σ 映射到 [0,1]
+     τ̂² = max(0, Var(z) − 1)：Var(z) 里 1 是纯抽样噪声，多出来的部分才是
+     「号码层面的系统性偏差」；没有就收缩到 0（等价于认定冷热号全是噪声）。 */
+
+  const Z_REF = 3;                      // ±3σ 作为 hot 量程的端点
+
+  /* 正态-正态经验贝叶斯收缩：z = θ + ε，ε~N(0,1)，θ~N(0,τ²) → k = τ²/(τ²+1) */
+  function ebShrink(zs){
+    const M = zs.length;
+    if (!M) return { k:0, tau2:0, varZ:0 };
+    let mean = 0;
+    for (const v of zs) mean += v;
+    mean /= M;
+    let ss = 0;
+    for (const v of zs){ const d = v - mean; ss += d * d; }
+    const varZ = M > 1 ? ss / (M - 1) : 0;
+    const tau2 = Math.max(0, varZ - 1);        // 超出抽样噪声的离散度
+    return { k: tau2 / (tau2 + 1), tau2, varZ };
+  }
+
+  /* 频次 z 诊断：原始 z、收缩系数、量程，供界面展示 */
+  function freqZ(S, range, which){
+    const isRed = which === "red";
+    const f = isRed ? S.fR : S.fB;
+    const p = isRed ? 6 / 33 : 1 / 16;          // 每期开出的概率
+    const mu = S.n * p;                          // 随机期望出现次数
+    const sd = Math.sqrt(S.n * p * (1 - p));     // 二项抽样标准差
+    const z = {}, arr = [];
+    for (const x of range){
+      const v = sd > 0 ? (f[x] - mu) / sd : 0;
+      z[x] = v; arr.push(v);
+    }
+    const eb = ebShrink(arr);
+    let zMin = Infinity, zMax = -Infinity, maxAbs = 0;
+    for (const v of arr){
+      if (v < zMin) zMin = v;
+      if (v > zMax) zMax = v;
+      const a = Math.abs(v);
+      if (a > maxAbs) maxAbs = a;
+    }
+    let fMin = Infinity, fMax = -Infinity;
+    for (const x of range){
+      if (f[x] < fMin) fMin = f[x];
+      if (f[x] > fMax) fMax = f[x];
+    }
+    return { z, mu, sd, k: eb.k, tau2: eb.tau2, varZ: eb.varZ, zMin, zMax, maxAbs, fMin, fMax, n: S.n, p };
+  }
+
+  /* 评分：热(z 收缩后 0-1) / 遗漏(0-1) / 近期(0-1) */
   function scores(S, range, which){
     const isRed = which === "red";
     const f   = isRed ? S.fR : S.fB;
     const gap = isRed ? S.gapR : S.gapB;
     const rec = isRed ? S.recR : S.recB;
-    const W   = S.W;
 
-    let fMin = Infinity, fMax = -Infinity, rMax = 1;
-    for (const x of range){
-      if (f[x] < fMin) fMin = f[x];
-      if (f[x] > fMax) fMax = f[x];
-      if (rec[x] > rMax) rMax = rec[x];
-    }
-    const fSpan = Math.max(1, fMax - fMin);
+    const FZ = freqZ(S, range, which);
+
+    let rMax = 1;
+    for (const x of range) if (rec[x] > rMax) rMax = rec[x];
 
     const out = {};
     for (const x of range){
       const expGap = S.n / Math.max(1, f[x]);                 // 期望回归间隔
-      const hot = (f[x] - fMin) / fSpan;                      // 0..1
+      const z = FZ.z[x];
+      const zShrunk = FZ.k * z;                               // 收缩后的 z（后验均值）
+      const hot = Math.max(0, Math.min(1, 0.5 + 0.5 * zShrunk / Z_REF));  // ±3σ → 0..1
       const due = Math.min(1, (gap[x] / Math.max(1, expGap)) / 2);  // 0..1
       const recent = rec[x] / Math.max(1, rMax);              // 0..1
-      out[x] = { hot, due, recent, freq: f[x], gap: gap[x], expGap, recN: rec[x] };
+      out[x] = { hot, due, recent, freq: f[x], z, zShrunk, gap: gap[x], expGap, recN: rec[x] };
     }
     return out;
   }
@@ -1867,46 +1933,104 @@
   }
 
   /* ══════════ 5. 渲染：热力矩阵 ══════════ */
+  const fmtZ = z => (z >= 0 ? "+" : "-") + Math.abs(z).toFixed(2);
+
   function renderMatrix(){
     const S = statsOf(DRAWS);
     const scR = scores(S, RED_RANGE, "red");
     const scB = scores(S, BLUE_RANGE, "blue");
-
-    const avgR = N * 6 / 33;
-    const avgB = N / 16;
+    const zR  = freqZ(S, RED_RANGE, "red");
+    const zB  = freqZ(S, BLUE_RANGE, "blue");
 
     const gR = $("#gridRed"), gB = $("#gridBlue");
     gR.innerHTML = ""; gB.innerHTML = "";
 
     RED_RANGE.forEach(x => {
       const s = scR[x];
-      const d = s.freq - avgR;
-      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(d) / 52);
+      const z = s.z;
+      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(z) / Z_REF);
       const cell = document.createElement("div");
-      cell.className = "cell" + (d > 8 ? " hot" : d < -8 ? " cold" : "");
+      cell.className = "cell" + (z >= 1 ? " hot" : z <= -1 ? " cold" : "");
       cell.dataset.r = x;
-      cell.style.background = d >= 0
+      cell.style.background = z >= 0
         ? `rgba(198,20,30,${ratio.toFixed(3)})`
         : `rgba(74,102,146,${ratio.toFixed(3)})`;
-      cell.title = `${pad(x)} 号｜出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
-      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${s.freq}·${s.gap}</span>`;
+      cell.title = `${pad(x)} 号｜z = ${fmtZ(s.z)}σ（收缩后 ${fmtZ(s.zShrunk)}σ）｜` +
+                   `出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
+      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${fmtZ(s.z)}</span>`;
       gR.appendChild(cell);
     });
 
     BLUE_RANGE.forEach(x => {
       const s = scB[x];
-      const d = s.freq - avgB;
-      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(d) / 30);
+      const z = s.z;
+      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(z) / Z_REF);
       const cell = document.createElement("div");
-      cell.className = "cell" + (d > 5 ? " hot" : d < -5 ? " cold" : "");
+      cell.className = "cell" + (z >= 1 ? " hot" : z <= -1 ? " cold" : "");
       cell.dataset.b = x;
-      cell.style.background = d >= 0
+      cell.style.background = z >= 0
         ? `rgba(198,20,30,${ratio.toFixed(3)})`
         : `rgba(74,102,146,${ratio.toFixed(3)})`;
-      cell.title = `${pad(x)} 号｜出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
-      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${s.freq}·${s.gap}</span>`;
+      cell.title = `${pad(x)} 号｜z = ${fmtZ(s.z)}σ（收缩后 ${fmtZ(s.zShrunk)}σ）｜` +
+                   `出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
+      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${fmtZ(s.z)}</span>`;
       gB.appendChild(cell);
     });
+
+    renderHeatNote(S, scR, scB, zR, zB);
+  }
+
+  /* ══════════ 5a. 热度说明：z 分数 + 收缩系数 + 权重放大倍数 ══════════ */
+  function renderHeatNote(S, scR, scB, zR, zB){
+    const el = $("#heatNote");
+    if (!el) return;
+
+    const spread = arr => Math.max.apply(null, arr) - Math.min.apply(null, arr);
+    const hotSpread = spread(RED_RANGE.map(x => scR[x].hot));
+    const dueSpread = spread(RED_RANGE.map(x => scR[x].due));
+    const recSpread = spread(RED_RANGE.map(x => scR[x].recent));
+
+    // 热号追踪策略：旧版冷热通道用 min–max 归一化（跨度恒为 1），新版是 z 收缩后的跨度
+    const cfg = STRATS.hot;
+    const fSpan = Math.max(1, zR.fMax - zR.fMin);
+    const legacyHot = x => (S.fR[x] - zR.fMin) / fSpan;
+    // 复刻 buildWeights 的 comp（不含 jitter），直接量出真实权重的最大/最小之比
+    const compOld = RED_RANGE.map(x => cfg.hot * legacyHot(x) + cfg.due * scR[x].due + cfg.recent * scR[x].recent);
+    const compNew = RED_RANGE.map(x => cfg.hot * scR[x].hot + cfg.due * scR[x].due + cfg.recent * scR[x].recent);
+    const actualOld = Math.exp(cfg.beta * spread(compOld));
+    const actualNew = Math.exp(cfg.beta * spread(compNew));
+    const chanOld = Math.exp(cfg.beta * cfg.hot * 1);        // 冷热频次通道单独
+    const chanNew = Math.exp(cfg.beta * cfg.hot * hotSpread);
+    const worstOld = Math.exp(cfg.beta * (cfg.hot * 1 + cfg.due * 1 + cfg.recent * 1));
+    const worstNew = Math.exp(cfg.beta * (cfg.hot * hotSpread + cfg.due * dueSpread + cfg.recent * recSpread));
+
+    const within = zR.maxAbs < 3;
+    const blueWithin = zB.maxAbs < 3;
+
+    el.innerHTML =
+      `<div class="heat-line"><span class="hk">频次 z 分数</span>` +
+      `<span>红球 33 个号码落在 <b>${fmtZ(zR.zMin)}σ ~ ${fmtZ(zR.zMax)}σ</b>，` +
+      `最大 |z| = <b>${zR.maxAbs.toFixed(2)}σ</b>${within ? "（小于 3σ）" : "（达到或超过 3σ）"}；` +
+      `33 个二项变量在纯随机下的 |z| 期望最大值约 2.3 —— 这份离散度就是噪声本身。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">经验贝叶斯收缩</span>` +
+      `<span>τ̂² = ${zR.tau2.toFixed(2)}（超出抽样噪声 Var(z)−1 的部分），` +
+      `收缩系数 k = <b>${zR.k.toFixed(2)}</b>，收缩后 z ∈ ${fmtZ(zR.zMin * zR.k)}σ ~ ${fmtZ(zR.zMax * zR.k)}σ；` +
+      `蓝球 z ∈ ${fmtZ(zB.zMin)}σ ~ ${fmtZ(zB.zMax)}σ，k = <b>${zB.k.toFixed(2)}</b>` +
+      `${zB.k === 0 ? "（未检出任何号码层面的偏离）" : ""}。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">权重放大</span>` +
+      `<span>热号追踪策略下，33 个红球的实际最大/最小权重之比从旧 min–max 归一化的 ` +
+      `<b>${actualOld.toFixed(1)}×</b> 降到 <b>${actualNew.toFixed(1)}×</b>` +
+      `（其中冷热频次通道 ${chanOld.toFixed(1)}× → ${chanNew.toFixed(1)}×；` +
+      `各通道同时取极值的理论上限 ${worstOld.toFixed(1)}× → ${worstNew.toFixed(1)}×）。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">结论</span>` +
+      `<span>${within && blueWithin
+        ? "红球与蓝球的全部号码都落在 ±3σ 内 —— 没有哪个号码真的「热」或「冷」"
+        : "存在 |z| 达到 3σ 的号码，但样本量有限，仍需谨慎"}，` +
+      `热号只是噪声的别名。格子里的数字就是 z 值（相对随机期望的标准差），` +
+      `负号表示比随机期望更少出现。</span></div>`;
   }
 
   /* ══════════ 5b. 胆码锁定 ══════════ */
