@@ -2,7 +2,7 @@
 """
 双色球概率实验室 · 本地服务
 
-    python server.py            # 启动并打开 http://127.0.0.1:8787
+    python server.py            # 启动并打开 http://127.0.0.1:8899
     python server.py --no-open  # 只启动，不自动开浏览器
 
 职责：
@@ -14,14 +14,17 @@
 """
 import argparse
 import datetime as dt
+import ipaddress
 import json
 import os
+import posixpath
 import re
 import sqlite3
 import sys
 import threading
 import time
 import webbrowser
+from contextlib import closing
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
@@ -29,6 +32,8 @@ from urllib.parse import parse_qs, unquote, urlparse
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA_JS = os.path.join(BASE, "assets", "data.js")
 DB_PATH = os.path.join(BASE, "data", "ssq.db")
+SINGLE_FILE = "双色球概率实验室-单文件版.html"
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS draws (
@@ -82,8 +87,9 @@ def connect():
 
 
 def init_db():
-    with connect() as conn:
+    with closing(connect()) as conn:
         conn.executescript(SCHEMA)
+        conn.commit()
 
 
 def read_draws_js():
@@ -112,7 +118,7 @@ def sync_draws(force=False):
         if not force and mtime == _draw_mtime["value"]:
             return
         rows = read_draws_js()
-        with connect() as conn:
+        with closing(connect()) as conn:
             conn.execute("BEGIN")
             conn.execute("DELETE FROM draws")
             conn.executemany(
@@ -247,8 +253,55 @@ class Handler(SimpleHTTPRequestHandler):
     def api_path(self):
         return unquote(urlparse(self.path).path)
 
+    # ---------- 静态文件白名单 / Host 校验 ----------
+    def host_allowed(self):
+        """只接受回环名和 IP 字面量，挡掉 DNS rebinding 使用的域名 Host。"""
+        host = (self.headers.get("Host") or "").strip()
+        if not host:
+            return True  # HTTP/1.0 客户端可能不带 Host
+        if host.startswith("["):  # IPv6 字面量 [::1]:8899
+            end = host.find("]")
+            name = host[1:end] if end != -1 else host
+        else:
+            name = host.rsplit(":", 1)[0]
+        name = name.strip().lower()
+        if name in LOOPBACK_HOSTS:
+            return True
+        try:
+            ipaddress.ip_address(name)
+            return True
+        except ValueError:
+            return False
+
+    def guard(self, head=False):
+        if self.host_allowed():
+            return True
+        if head:
+            self.send_response(403)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+        else:
+            self.send_json({"ok": False, "error": "Host 不被允许（只服务本机地址）"}, 403)
+        return False
+
+    def static_path_allowed(self, path):
+        norm = posixpath.normpath(unquote(path).replace("\\", "/"))
+        if norm in ("/", "/index.html"):
+            return True
+        if norm == "/" + SINGLE_FILE:
+            return True
+        return norm.startswith("/assets/")
+
+    def translate_path(self, path):
+        # 目录穿越（/assets/../server.py、%2e%2e）在 normpath 后落到白名单外，一并挡住
+        if not self.static_path_allowed(urlparse(path).path):
+            return os.path.join(self.directory, ".static-forbidden")
+        return super().translate_path(path)
+
     # ---------- GET ----------
     def do_GET(self):
+        if not self.guard():
+            return
         path = self.api_path()
         if not path.startswith("/api/"):
             return super().do_GET()
@@ -257,7 +310,7 @@ class Handler(SimpleHTTPRequestHandler):
             query = parse_qs(urlparse(self.path).query)
 
             if path == "/api/health":
-                with connect() as conn:
+                with closing(connect()) as conn:
                     draws = conn.execute("SELECT COUNT(*) c FROM draws").fetchone()["c"]
                     preds = conn.execute("SELECT COUNT(*) c FROM predictions").fetchone()["c"]
                     checks = conn.execute("SELECT COUNT(*) c FROM checks").fetchone()["c"]
@@ -278,7 +331,7 @@ class Handler(SimpleHTTPRequestHandler):
                     args, params = "WHERE issue = ?", [query["issue"][0]]
                 elif query.get("day"):
                     args, params = "WHERE day = ?", [query["day"][0]]
-                with connect() as conn:
+                with closing(connect()) as conn:
                     total = conn.execute(f"SELECT COUNT(*) c FROM predictions {args}", params).fetchone()["c"]
                     rows = conn.execute(
                         f"SELECT * FROM predictions {args} ORDER BY ts DESC, id DESC LIMIT ?",
@@ -298,7 +351,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.send_json(
                         {"ok": False, "error": "请输入 7 位期号或日期，如 2026133 / 2026-11-17"}, 400
                     )
-                with connect() as conn:
+                with closing(connect()) as conn:
                     draw = conn.execute(f"SELECT * FROM draws WHERE {where} ORDER BY issue DESC LIMIT 1", params).fetchone()
                     rows = conn.execute(
                         f"SELECT * FROM predictions WHERE {where} ORDER BY ts DESC, id DESC LIMIT 100", params
@@ -325,7 +378,7 @@ class Handler(SimpleHTTPRequestHandler):
                     args, params = "WHERE issue = ?", [query["issue"][0]]
                 elif query.get("day"):
                     args, params = "WHERE day = ?", [query["day"][0]]
-                with connect() as conn:
+                with closing(connect()) as conn:
                     total = conn.execute(f"SELECT COUNT(*) c FROM checks {args}", params).fetchone()["c"]
                     rows = conn.execute(
                         f"SELECT * FROM checks {args} ORDER BY ts DESC, id DESC LIMIT ?",
@@ -342,8 +395,15 @@ class Handler(SimpleHTTPRequestHandler):
             sys.stderr.write(f"API 错误: {exc}\n")
             return self.send_json({"ok": False, "error": str(exc)}, 500)
 
+    def do_HEAD(self):
+        if not self.guard(head=True):
+            return
+        return super().do_HEAD()
+
     # ---------- POST ----------
     def do_POST(self):
+        if not self.guard():
+            return
         path = self.api_path()
         if path not in ("/api/predictions", "/api/checks"):
             return self.send_json({"ok": False, "error": "未知接口"}, 404)
@@ -352,6 +412,8 @@ class Handler(SimpleHTTPRequestHandler):
             body = self.read_json()
             if body is None:
                 return self.send_json({"ok": False, "error": "请求体不是合法 JSON"}, 400)
+            if not isinstance(body, dict):
+                return self.send_json({"ok": False, "error": "请求体必须是 JSON 对象"}, 400)
 
             if path == "/api/checks":
                 issue = str(body.get("issue") or "").strip()
@@ -373,7 +435,7 @@ class Handler(SimpleHTTPRequestHandler):
                 prize = str(body.get("prize") or "")
                 created = time.strftime("%Y-%m-%d %H:%M:%S")
                 ts = int(body.get("ts") or time.time() * 1000)
-                with connect() as conn:
+                with closing(connect()) as conn:
                     day_row = conn.execute("SELECT day FROM draws WHERE issue = ?", [issue]).fetchone()
                     day = day_row["day"] if day_row else (body.get("day") or expected_day(issue, conn))
                     dup = conn.execute(
@@ -413,7 +475,7 @@ class Handler(SimpleHTTPRequestHandler):
             created = time.strftime("%Y-%m-%d %H:%M:%S")
             ts = int(body.get("ts") or time.time() * 1000)
 
-            with connect() as conn:
+            with closing(connect()) as conn:
                 day_row = conn.execute("SELECT day FROM draws WHERE issue = ?", [issue]).fetchone()
                 day = day_row["day"] if day_row else (body.get("day") or expected_day(issue, conn))
 
@@ -446,13 +508,15 @@ class Handler(SimpleHTTPRequestHandler):
 
     # ---------- DELETE ----------
     def do_DELETE(self):
+        if not self.guard():
+            return
         path = self.api_path()
         m = re.fullmatch(r"/api/(predictions|checks)/(\d+)", path)
         if not m:
             return self.send_json({"ok": False, "error": "未知接口"}, 404)
         table = "predictions" if m.group(1) == "predictions" else "checks"
         try:
-            with connect() as conn:
+            with closing(connect()) as conn:
                 conn.execute(f"DELETE FROM {table} WHERE id = ?", [int(m.group(2))])
                 conn.commit()
             return self.send_json({"ok": True})
@@ -483,7 +547,8 @@ def main():
     init_db()
     sync_draws(force=True)
     port = pick_port(args.host, args.port)
-    url = f"http://{args.host}:{port}/index.html"
+    open_host = "127.0.0.1" if args.host in ("0.0.0.0", "::", "") else args.host
+    url = f"http://{open_host}:{port}/index.html"
 
     handler = partial(Handler, directory=BASE)
     httpd = ThreadingHTTPServer((args.host, port), handler)
@@ -494,6 +559,10 @@ def main():
     print(f"  数据库    {os.path.relpath(DB_PATH, BASE)}")
     print(f"  开奖数据  assets/data.js（更新后自动同步进库）")
     print("  按 Ctrl+C 退出")
+    if args.host not in LOOPBACK_HOSTS:
+        print("-" * 62)
+        print(f"  [警告] 正在监听 {args.host}，局域网内其他机器也能打开页面、")
+        print("         读取 / 写入推演记录。仅本机使用时请保持默认的 127.0.0.1。")
     print("=" * 62)
 
     if not args.no_open:
