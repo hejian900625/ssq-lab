@@ -1,5 +1,5 @@
 ﻿# 双色球开奖数据自动更新
-# 由计划任务调用：每周三、周五 09:00
+# 由计划任务调用：每周一、三、五 09:00（分别覆盖 周日/周二/周四 开奖）
 # 流程：抓取四个数据源 -> 重建 CSV/JSON/Excel -> assets/data.js -> 单文件版
 
 $ErrorActionPreference = 'Continue'
@@ -70,10 +70,48 @@ function Invoke-PyStep {
   }
 }
 
-$script:Py = (Get-Command python.exe -ErrorAction SilentlyContinue).Source
-if (-not $script:Py) { $script:Py = 'C:\Python314\python.exe' }
-if (-not (Test-Path -LiteralPath $script:Py)) {
-  Write-Host '找不到 python.exe，无法更新'
+function Resolve-Python {
+  # 探测可用的 python.exe：优先 PATH（python / python3），其次常见安装目录。
+  # 命中一个能真正运行的解释器即返回其完整路径；全部落空返回 $null。
+  $candidates = @()
+
+  # 1) PATH：解析为具体的 .exe（避免命中别名或 Windows 商店桩）
+  foreach ($name in 'python', 'python3') {
+    $cmd = Get-Command -Name $name -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source) { $candidates += $cmd.Source }
+  }
+
+  # 2) 常见安装目录：匹配名为 Python* 的子目录下的 python.exe
+  $roots = @()
+  if ($env:LOCALAPPDATA)         { $roots += Join-Path $env:LOCALAPPDATA 'Programs\Python' }
+  if ($env:ProgramFiles)         { $roots += $env:ProgramFiles }
+  if (${env:ProgramFiles(x86)})  { $roots += ${env:ProgramFiles(x86)} }
+  $roots += 'C:\'  # 覆盖自建到 C:\PythonNN 这类非默认安装目录的机器
+
+  foreach ($r in $roots) {
+    if ([string]::IsNullOrWhiteSpace($r) -or -not (Test-Path -LiteralPath $r)) { continue }
+    Get-ChildItem -LiteralPath $r -Directory -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -match 'Python' -and $_.Name -match '\d' } |
+      ForEach-Object {
+        $exe = Join-Path $_.FullName 'python.exe'
+        if (Test-Path -LiteralPath $exe) { $candidates += $exe }
+      }
+  }
+
+  # 逐个去重并验证可运行（--version 能过），命中即返回
+  $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+  foreach ($c in $candidates) {
+    if ($c -and $seen.Add($c) -and (Test-Path -LiteralPath $c)) {
+      & $c --version 2>&1 | Out-Null
+      if ($LASTEXITCODE -eq 0) { return $c }
+    }
+  }
+  return $null
+}
+
+$script:Py = Resolve-Python
+if (-not $script:Py) {
+  Write-Host '找不到可用的 python.exe，无法更新（已探测 PATH 与常见安装目录）'
   exit 1
 }
 
