@@ -471,6 +471,20 @@
   .bt-empty{text-align:center;color:var(--dim);padding:22px 12px !important}
   .bt-foot{margin-top:12px;font-size:10px;color:var(--dim);line-height:1.8}
   .bt-foot b{color:var(--muted);font-weight:500}
+  /* P0-2/P0-3: 回测窗口与功效信息 */
+  .bt-window-bar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .bt-window-label{
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--muted);
+    text-transform:uppercase;white-space:nowrap;
+  }
+  .bt-window-tip{
+    font-family:var(--mono);font-size:9.5px;color:var(--dim);line-height:1.7;
+    flex:1;min-width:220px;
+  }
+  .bt-window-tip b{color:var(--gold);font-weight:500}
 
   /* 自进化预测 */
   .evo-panel{border:1px solid var(--line);background:var(--bg-2)}
@@ -783,7 +797,7 @@
     <div class="block-head">
       <span class="idx">01</span>
       <h2>算法体检</h2>
-      <span class="note">打开页面自动回测 · 四策略 · 最近 120 期</span>
+      <span class="note">打开页面自动回测 · 四策略 · 窗口可选 120 / 500 / 全部</span>
     </div>
 
     <div class="lab-grid">
@@ -816,6 +830,10 @@
           <span>相对随机</span>
           <span id="btGap">—</span>
         </div>
+        <div class="vs-line" style="border-top:0;padding-top:4px;margin-top:4px">
+          <span>本样本功效</span>
+          <span id="btPower">—</span>
+        </div>
         <div class="verdict" id="verdict">
           页面打开即自动在同一批最近 120 期上把四种策略各跑一遍：
           每一期都只用它<strong>之前</strong>的数据推演，再与真实开奖逐期比对。<br><br>
@@ -830,17 +848,26 @@
         <h4>Four Strategies / 四策略对比</h4>
         <span id="btMeta">最近 120 期 · 每期 1 注 · 成本 ¥2/注</span>
       </div>
+      <div class="bt-window-bar">
+        <span class="bt-window-label">回测窗口</span>
+        <div class="seg" id="btWindow" role="group" aria-label="回测窗口">
+          <button type="button" data-w="120" class="on">120 期</button>
+          <button type="button" data-w="500">500 期</button>
+          <button type="button" data-w="all">全部</button>
+        </div>
+        <span class="bt-window-tip" id="btWindowTip">正在计算本样本功效…</span>
+      </div>
       <div class="bt-scroll">
         <table class="bt-table">
           <thead>
             <tr>
               <th>策略</th>
-              <th>红球均值（95% CI）</th>
+              <th>红球均值（Bootstrap 95% CI）</th>
               <th>蓝球命中率（95% CI）</th>
               <th>相对随机</th>
               <th>最高</th>
               <th>固定奖回收</th>
-              <th>结论</th>
+              <th>校正后结论</th>
             </tr>
           </thead>
           <tbody id="btBody">
@@ -850,8 +877,12 @@
       </div>
       <div class="bt-foot">
         成本按 <b>2 元/注</b> 计算；固定奖按三等奖 3,000、四等奖 200、五等奖 10、六等奖 5 元计算。
-        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。置信区间为 95%，覆盖随机期望即视为差异不显著。
-        「纯随机构造」是对照组，它同样可能因抽样波动落在区间外——这正是 120 期样本不能当结论的原因。
+        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。<br>
+        <b>统计口径（P0 修订）</b>：红球命中数取值 0–6、分布右偏，其 95% CI 改用 <b>Bootstrap 重抽样</b>（不再用正态近似）；蓝球命中率仍用 Wilson 区间。
+        四种策略 × 红/蓝两项指标 = <b>8 次检验</b>，若不校正家族错误率约 1−0.95⁸ ≈ <b>34%</b>；
+        这里对 8 个置换检验 p 值做 <b>BH-FDR 校正</b>（同时给出 Bonferroni 阈值 α/8 = 0.00625）后再判定显著性。
+        p 值来自以「纯随机构造」 hit 分布为零假设的随机化/置换检验（蓝球用二项随机抽样），不再只给「显著 / 不显著」。
+        「纯随机构造」本身也是一条样本，同样可能落在区间外——这正是短窗口不能当结论的原因，窗口与最小可检出效应见上方说明。
       </div>
     </div>
   </section>
@@ -1971,7 +2002,9 @@
   }
 
   /* ══════════ 6. 回测（四策略对比 + 置信区间 + 固定奖回收） ══════════ */
-  const BT_N = Math.min(120, N - 1);
+  /* P0-2: 回测窗口可在 120 / 500 / 全部 之间切换，BT_N 由窗口决定 */
+  let btWindow = "120";
+  let BT_N = Math.min(120, N - 1);
   const BT_COST = 2;
   const BT_RED_EXPECT = 6 * 6 / 33;
   const BT_BLUE_EXPECT = 1 / 16;
@@ -2002,6 +2035,160 @@
 
   function sigLabel(sig){
     return sig === "below" ? "显著低于随机" : sig === "above" ? "显著高于随机" : "与随机无显著差异";
+  }
+
+  /* ── P0-2 / P0-3 / P0-7 统计增强：Bootstrap CI · 置换检验 · BH-FDR · 功效 ──
+     只消费 finish() 已经写进 btResults 的聚合量（hitDist / blueHits / sd），
+     不触碰 stepOnce() / generate() / buildWeights()。 */
+  const BT_Z975 = 1.959964;              // 95% 双侧临界值
+  const BT_Z80  = 0.841621;              // 80% 把握度临界值
+  const BT_BONFERRONI = 0.05 / 8;        // 8 次检验的 Bonferroni 单次阈值 = 0.00625
+
+  // 统计层私有确定性 RNG：与回测模拟的随机种子相互独立，保证同一窗口重跑统计结论稳定。
+  function btStatRng(seed){
+    let a = seed >>> 0;
+    return function(){
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // hitDist[0..6] 完整记录了每期红球命中数（取值仅 0–6），可直接还原原始样本。
+  function btHitSample(hitDist){
+    const out = [];
+    for (let h = 0; h < hitDist.length; h++)
+      for (let j = 0; j < hitDist[h]; j++) out.push(h);
+    return out;
+  }
+
+  function btDistMean(hitDist){
+    let s = 0, n = 0;
+    for (let h = 0; h < hitDist.length; h++){ s += h * hitDist[h]; n += hitDist[h]; }
+    return n ? s / n : 0;
+  }
+
+  // P0-7：红球命中数高度右偏，改用 bootstrap 百分位区间替代正态近似。
+  function bootstrapHitCi(hitDist, n, B){
+    const sample = btHitSample(hitDist);
+    if (!sample.length) return { lo:0, hi:0, se:0 };
+    const rnd = btStatRng(0x5EED ^ Math.imul(n, 2654435761));
+    const means = new Float64Array(B);
+    for (let b = 0; b < B; b++){
+      let s = 0;
+      for (let i = 0; i < n; i++) s += sample[(rnd() * sample.length) | 0];
+      means[b] = s / n;
+    }
+    means.sort();
+    let m = 0;
+    for (let b = 0; b < B; b++) m += means[b];
+    m /= B;
+    let v = 0;
+    for (let b = 0; b < B; b++) v += (means[b] - m) * (means[b] - m);
+    return {
+      lo: means[Math.floor(0.025 * B)],
+      hi: means[Math.min(B - 1, Math.floor(0.975 * B))],
+      se: Math.sqrt(v / (B - 1))
+    };
+  }
+
+  // P0-3：以「纯随机构造」的 hit 分布为零假设做随机化/置换检验。
+  // 统计量 = |策略红球均值 − 纯随机均值|；原假设下从纯随机样本有放回重抽样。
+  function btRedPermP(obsMean, pureMean, pureHitDist, n, B){
+    const sample = btHitSample(pureHitDist);
+    if (!sample.length) return 1;
+    const rnd = btStatRng(0xA11CE ^ Math.imul(n, 2246822519));
+    const obsDev = Math.abs(obsMean - pureMean);
+    let ge = 0;
+    for (let b = 0; b < B; b++){
+      let s = 0;
+      for (let i = 0; i < n; i++) s += sample[(rnd() * sample.length) | 0];
+      if (Math.abs(s / n - pureMean) >= obsDev - 1e-12) ge++;
+    }
+    return (ge + 1) / (B + 1);
+  }
+
+  // 蓝球命中率：理论随机率 p0 = 1/16 下的二项随机抽样双侧 p 值。
+  function btBlueMcP(k, n, p0, B){
+    const rnd = btStatRng(0xB10C ^ Math.imul(n, 3266489917));
+    const obsDev = Math.abs(k / n - p0);
+    let ge = 0;
+    for (let b = 0; b < B; b++){
+      let c = 0;
+      for (let i = 0; i < n; i++) if (rnd() < p0) c++;
+      if (Math.abs(c / n - p0) >= obsDev - 1e-12) ge++;
+    }
+    return (ge + 1) / (B + 1);
+  }
+
+  // P0-3：Benjamini–Hochberg FDR 校正，返回与输入同序的 q 值。
+  function bhFdr(pvals){
+    const m = pvals.length;
+    const order = pvals.map((p, i) => ({ p, i })).sort((a, b) => a.p - b.p);
+    const q = new Array(m);
+    let prev = 1;
+    for (let r = m; r >= 1; r--){
+      prev = Math.min(prev, order[r - 1].p * m / r);
+      q[order[r - 1].i] = Math.min(1, prev);
+    }
+    return q;
+  }
+
+  // P0-2：本样本最小可检出效应（80% 把握度、α=0.05 双侧）。
+  function btMde(sd, n){
+    const se = sd / Math.sqrt(n);
+    const seB = Math.sqrt(BT_BLUE_EXPECT * (1 - BT_BLUE_EXPECT) / n);
+    return {
+      red: (BT_Z975 + BT_Z80) * se,
+      redHalf: BT_Z975 * se,
+      blue: (BT_Z975 + BT_Z80) * seB,
+      blueHalf: BT_Z975 * seB
+    };
+  }
+
+  function btWindowLabel(){
+    return btWindow === "all" ? `全部 ${BT_N} 期` : `${BT_N} 期`;
+  }
+
+  function updateBtWindowTip(){
+    const tip = $("#btWindowTip");
+    if (!tip) return;
+    const sd = (btResults && btResults.pure) ? btResults.pure.red.sd
+             : Math.sqrt(6 * (6 / 33) * (27 / 33) * (27 / 32));
+    const m = btMde(sd, BT_N);
+    tip.innerHTML =
+      `窗口 ${btWindowLabel()}：95% CI 半宽 红 ±${m.redHalf.toFixed(2)} 个 / 蓝 ±${(m.blueHalf * 100).toFixed(1)}pp；` +
+      `<b>本样本最小可检出效应（80% 把握度）红 ±${m.red.toFixed(2)} 个 / 蓝 ±${(m.blue * 100).toFixed(1)}pp</b>`;
+  }
+
+  // 统计结果缓存：finish() 每次写入全新的 btResults 对象，无需担心跨回测复用。
+  function ensureBtStats(){
+    if (!btResults || btResults.__btStatsReady) return;
+    const B = BT_N > 600 ? 800 : 2000;
+    const pureMean = btDistMean(btResults.pure.hitDist);
+    btResults.__btPureRedMean = pureMean;
+    BT_KEYS.forEach(k => {
+      const r = btResults[k];
+      r.stat = {
+        redBoot: bootstrapHitCi(r.hitDist, BT_N, B),
+        redP: btRedPermP(r.red.mean, pureMean, btResults.pure.hitDist, BT_N, B),
+        blueP: btBlueMcP(r.blueHits, BT_N, BT_BLUE_EXPECT, B),
+        mde: btMde(r.red.sd, BT_N)
+      };
+    });
+    const qRed = bhFdr(BT_KEYS.map(k => btResults[k].stat.redP));
+    const qBlue = bhFdr(BT_KEYS.map(k => btResults[k].stat.blueP));
+    BT_KEYS.forEach((k, i) => {
+      const s = btResults[k].stat;
+      s.qRed = qRed[i];
+      s.qBlue = qBlue[i];
+      s.sigRed = qRed[i] < 0.05;
+      s.sigBlue = qBlue[i] < 0.05;
+    });
+    btResults.__btStatsReady = true;
+    updateBtWindowTip();
   }
 
   function signed(v, digits){
@@ -2099,21 +2286,25 @@
   function renderBtTable(){
     const tbody = $("#btBody");
     if (!tbody || !btResults) return;
+    ensureBtStats();
     tbody.innerHTML = "";
     BT_KEYS.forEach(k => {
       const r = btResults[k];
+      const s = r.stat;
       const redDiff = r.red.mean - BT_RED_EXPECT;
       const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
-      const bothFlat = r.redSig === "flat" && r.blueSig === "flat";
-      const anyAbove = r.redSig === "above" || r.blueSig === "above";
-      const verdict = bothFlat ? "无显著差异" : anyAbove ? "高于随机" : "低于随机";
+      const bothFlat = !s.sigRed && !s.sigBlue;
+      const anyAbove = (s.sigRed && r.red.mean > btResults.__btPureRedMean) ||
+                       (s.sigBlue && r.blueP > BT_BLUE_EXPECT);
+      const verdict = bothFlat ? "校正后无差异" : anyAbove ? "校正后偏高" : "校正后偏低";
       const vClass = bothFlat ? "sig-flat" : anyAbove ? "sig-above" : "sig-below";
+      const qLine = `红 q=${s.qRed.toFixed(3)} (p=${s.redP.toFixed(3)}) · 蓝 q=${s.qBlue.toFixed(3)} (p=${s.blueP.toFixed(3)})`;
       const tr = document.createElement("tr");
       tr.dataset.k = k;
       if (k === btViewKey) tr.classList.add("on");
       tr.innerHTML =
         `<td><div class="nm">${r.label}</div><div class="ci">${k === "pure" ? "随机对照" : "策略"}</div></td>` +
-        `<td>${r.red.mean.toFixed(2)}<div class="ci">95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}</div></td>` +
+        `<td>${r.red.mean.toFixed(2)}<div class="ci">Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}</div></td>` +
         `<td>${(r.blueP * 100).toFixed(2)}%<div class="ci">95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%</div></td>` +
         `<td class="sig-${r.redSig}">红 ${signed(redDiff, 2)}<div class="ci sig-${r.blueSig}">蓝 ${signed(blueDiff, 1)}pp</div></td>` +
         `<td>${r.best} 红<div class="ci">蓝球 ${r.blueHits} 次</div></td>` +
@@ -2121,8 +2312,8 @@
           `<div class="ci">3等${r.tiers[3]} 4等${r.tiers[4]} 5等${r.tiers[5]} 6等${r.tiers[6]}</div>` +
           (r.floating ? `<div class="ci warn">浮动奖 ${r.floating} 次</div>` : "") +
         `</td>` +
-        `<td class="${vClass}">${verdict}</td>`;
-      tr.title = "点击查看该策略的命中分布";
+        `<td class="${vClass}">${verdict}<div class="ci">${qLine}</div></td>`;
+      tr.title = "点击查看该策略的命中分布（p/q 为置换检验与 BH-FDR 校正后结果）";
       tr.addEventListener("click", () => {
         btViewKey = k;
         renderBtTable();
@@ -2131,21 +2322,27 @@
       });
       tbody.appendChild(tr);
     });
-    $("#btMeta").textContent = `最近 ${BT_N} 期 · 每期 1 注 · 成本 ¥2/注 · 合计 ¥${BT_N * BT_COST}`;
+    $("#btMeta").textContent =
+      `${btWindowLabel()} · 每期 1 注 · 成本 ¥2/注 · 合计 ¥${BT_N * BT_COST} · ` +
+      `8 项检验 BH-FDR 校正（Bonferroni α=${BT_BONFERRONI.toFixed(5)}）`;
   }
 
   function renderBtDetail(){
     if (!btResults) return;
+    ensureBtStats();
     const r = btResults[btViewKey];
     if (!r) return;
+    const s = r.stat;
     const redDiff = r.red.mean - BT_RED_EXPECT;
     const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
-    $("#btCurrent").textContent = "回测详情 · " + r.label;
+    $("#btCurrent").textContent = "回测详情 · " + r.label + ` · ${btWindowLabel()}`;
     $("#btRed").textContent = r.red.mean.toFixed(2);
-    $("#btRedCi").textContent = `95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}`;
+    $("#btRedCi").textContent = `Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}`;
     $("#btBlue").textContent = (r.blueP * 100).toFixed(2) + "%";
     $("#btBlueCi").textContent = `95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%`;
     $("#btGap").textContent = `红 ${signed(redDiff, 2)} · 蓝 ${signed(blueDiff, 1)}pp`;
+    $("#btPower").textContent =
+      `MDE ±${s.mde.red.toFixed(2)} 红 / ±${(s.mde.blue * 100).toFixed(1)}pp 蓝（80% 把握度）`;
 
     const bars = $("#btBars");
     bars.innerHTML = "";
@@ -2166,17 +2363,28 @@
 
   function renderBtVerdict(){
     if (!btResults) return;
-    const flat = BT_KEYS.filter(k => btResults[k].redSig === "flat" && btResults[k].blueSig === "flat").length;
-    const off = BT_KEYS.length - flat;
+    ensureBtStats();
+    const sigCount = BT_KEYS.filter(k => btResults[k].stat.sigRed || btResults[k].stat.sigBlue).length;
     const r = btResults[btViewKey];
-    const head = off === 0
-      ? `四种策略的红球均值与蓝球命中率，95% 置信区间<b>全部覆盖随机期望</b>。${BT_N} 期里没有哪种策略表现出统计显著的预测力。`
-      : `${BT_KEYS.length} 种策略中有 <b>${off} 种</b>至少一项指标落在随机区间外。单次回测里这可能是抽样波动，不能直接当成预测力。`;
+    const s = r.stat;
+    const pureBlueP = btResults.pure.stat.blueP;
+    const head = sigCount === 0
+      ? `在 ${btWindowLabel()} 的样本上，8 项检验经 BH-FDR 校正后<b>全部不显著</b>（q ≥ 0.05）。` +
+        `本样本里没有哪种策略表现出可辨识的预测力；但「不显著」也受样本量制约——` +
+        `本窗口最小可检出效应约为红 ±${s.mde.red.toFixed(2)} 个 / 蓝 ±${(s.mde.blue * 100).toFixed(1)}pp（80% 把握度）。`
+      : `${BT_KEYS.length} 种策略中有 <b>${sigCount} 种</b>在 BH-FDR 校正后仍至少一项显著（q < 0.05）。` +
+        `未经校正时 8 次 95% 检验的家族错误率约 1−0.95⁸ ≈ 34%，因此这里只认校正后的结果。`;
     const detail =
-      `查看中：<b>${r.label}</b>。红球 ${r.red.mean.toFixed(2)} 个（95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}，${sigLabel(r.redSig)}），` +
-      `蓝球 ${(r.blueP * 100).toFixed(2)}%（95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%，${sigLabel(r.blueSig)}）。` +
+      `查看中：<b>${r.label}</b>。红球 ${r.red.mean.toFixed(2)} 个（Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}，` +
+      `置换检验 p=${s.redP.toFixed(3)}，BH q=${s.qRed.toFixed(3)}，${s.sigRed ? "校正后显著" : "校正后不显著"}），` +
+      `蓝球 ${(r.blueP * 100).toFixed(2)}%（95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%，` +
+      `p=${s.blueP.toFixed(3)}，q=${s.qBlue.toFixed(3)}，${s.sigBlue ? "校正后显著" : "校正后不显著"}）。` +
       `最高 ${r.best} 红，蓝球命中 ${r.blueHits} 次；固定奖回收 ¥${r.fixed} / 成本 ¥${r.cost}（${r.recovery.toFixed(1)}%）。`;
-    $("#verdict").innerHTML = head + `<br><br>` + detail + `<br><br>` +
+    const control =
+      `检验口径：红球 p 值以「纯随机构造」的命中分布为零假设做随机化/置换（故其自身恒为 p=1，仅作参照）；` +
+      `蓝球 p 值用理论随机率 1/16 的二项随机抽样。纯随机对照自身蓝球 p=${pureBlueP.toFixed(3)}；` +
+      `Bonferroni 单次阈值 α/8=${BT_BONFERRONI.toFixed(5)}，本页采用功效更高的 BH-FDR。`;
+    $("#verdict").innerHTML = head + `<br><br>` + detail + `<br><br>` + control + `<br><br>` +
       `固定奖按三等 3,000、四等 200、五等 10、六等 5 元计算；一、二等奖为浮动奖，单独计数，不计入回收率。`;
   }
 
@@ -3849,6 +4057,19 @@
   });
   $("#qInput").addEventListener("keydown", e => { if (e.key === "Enter") runQuery(); });
   $("#btnBacktest").addEventListener("click", backtest);
+  // P0-2：120 / 500 / 全部 窗口切换。只改窗口状态后复用现有 backtest()，不触碰 stepOnce()。
+  document.querySelectorAll("#btWindow button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if ($("#btnBacktest").disabled){ flashNote("回测进行中，请稍候再切换窗口"); return; }
+      const w = btn.dataset.w;
+      btWindow = w;
+      BT_N = w === "all" ? Math.max(1, N - 1) : Math.min(Number(w), N - 1);
+      document.querySelectorAll("#btWindow button").forEach(b => b.classList.toggle("on", b === btn));
+      btResults = null;
+      updateBtWindowTip();
+      backtest();
+    });
+  });
   $("#btnEvolve").addEventListener("click", runEvolution);
   $("#btnEvoCopy").addEventListener("click", () => {
     if (!evoResult) return;
