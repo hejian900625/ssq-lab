@@ -1463,9 +1463,9 @@
       const red = lockR.concat(picked).sort((a, b) => a - b);
       const blue = lockB || sample(BLUE_RANGE, wB, 1)[0];
       if (!first) first = { red, blue };
-      if (okShape(red)) return { red, blue, scR, scB };
+      if (okShape(red)) return { red, blue };
     }
-    return { red: first.red, blue: first.blue, scR, scB };
+    return { red: first.red, blue: first.blue };
   }
 
   /* ══════════ 3. 号码指纹 ══════════ */
@@ -1496,6 +1496,15 @@
   const ticketsEl = $("#tickets");
   const ticketListEl = $("#ticketList");
   const pad = n => String(n).padStart(2, "0");
+
+  /* 由最新期号推导下一期：年末 999 后进位到下一年 001。
+   * initHeader() 与自进化共用，避免两处各写一份「期号 +1」。 */
+  function nextIssue(code){
+    let year = Number(code.slice(0, 4));
+    let seq = Number(code.slice(4)) + 1;
+    if (seq > 999){ year++; seq = 1; }
+    return year + String(seq).padStart(3, "0");
+  }
 
   // 初始空球
   for (let i = 0; i < 7; i++){
@@ -1776,34 +1785,58 @@
       : "";
     const picks = rec.picks || [];
     const hits = rec.hits || [];
-    const nums = picks.map((p, i) => {
-      const h = hits[i];
-      const hitTxt = h
-        ? `<span class="hit${h.red === 0 && h.blue === 0 ? " zero" : ""}">${h.red} 红${h.blue ? " + 蓝" : ""}</span>`
-        : "";
-      return `<div class="saved-num"><span class="no">${pad(i + 1)}</span>` +
-        `<span class="rr">${p.red.map(pad).join(" ")}</span>` +
-        `<span class="bb">+ ${pad(p.blue)}</span>${hitTxt}</div>`;
-    }).join("");
 
-    item.innerHTML =
-      `<div class="saved-meta">` +
-        `<span class="code">${rec.issue} 期</span>` +
-        (rec.day ? `<span>${rec.day}</span>` : "") +
-        `<span class="mode">${rec.strategyLabel || rec.strategy}</span>` +
-        `<span>${picks.length} 注</span>` +
-        (lockNote ? `<span>${lockNote}</span>` : "") +
-        `<span class="time">${rec.createdAt || savedTime(rec.ts)}</span>` +
-      `</div>` +
-      `<div class="saved-nums">${nums}</div>` +
-      (withTools
-        ? `<div class="saved-tools">` +
-            `<button type="button" data-act="copy">复制</button>` +
-            `<button type="button" data-act="check">去验票</button>` +
-            `<button type="button" data-act="del" class="del">删除</button>` +
-            `<span class="hint">data/ssq.db</span>` +
-          `</div>`
-        : "");
+    // 服务端字段一律走 textContent，库里的原样字符串不会被当成 HTML（存储型 XSS）
+    const span = (cls, text) => {
+      const el = document.createElement("span");
+      if (cls) el.className = cls;
+      el.textContent = String(text);
+      return el;
+    };
+
+    const meta = document.createElement("div");
+    meta.className = "saved-meta";
+    meta.appendChild(span("code", String(rec.issue ?? "") + " 期"));
+    if (rec.day) meta.appendChild(span("", rec.day));
+    meta.appendChild(span("mode", rec.strategyLabel || rec.strategy || ""));
+    meta.appendChild(span("", picks.length + " 注"));
+    if (lockNote) meta.appendChild(span("", lockNote));
+    meta.appendChild(span("time", rec.createdAt || savedTime(rec.ts)));
+    item.appendChild(meta);
+
+    const nums = document.createElement("div");
+    nums.className = "saved-nums";
+    picks.forEach((p, i) => {
+      const h = hits[i];
+      const row = document.createElement("div");
+      row.className = "saved-num";
+      row.appendChild(span("no", pad(i + 1)));
+      row.appendChild(span("rr", p.red.map(pad).join(" ")));
+      row.appendChild(span("bb", "+ " + pad(p.blue)));
+      if (h){
+        row.appendChild(span("hit" + (h.red === 0 && h.blue === 0 ? " zero" : ""),
+                             h.red + " 红" + (h.blue ? " + 蓝" : "")));
+      }
+      nums.appendChild(row);
+    });
+    item.appendChild(nums);
+
+    if (withTools){
+      const tools = document.createElement("div");
+      tools.className = "saved-tools";
+      for (const [act, label, cls] of [
+        ["copy", "复制", ""], ["check", "去验票", ""], ["del", "删除", "del"]
+      ]){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.act = act;
+        if (cls) btn.className = cls;
+        btn.textContent = label;
+        tools.appendChild(btn);
+      }
+      tools.appendChild(span("hint", "data/ssq.db"));
+      item.appendChild(tools);
+    }
 
     item.querySelector('[data-act="copy"]')?.addEventListener("click", () => {
       copyText(picks.map(p => `${p.red.map(pad).join(" ")} + ${pad(p.blue)}`).join("\n"));
@@ -2604,6 +2637,24 @@
   let evoBusy = false;
   let evoFlashTimer = 0;
 
+  /* 自进化每步原本要新建约 14 个数组（evoDist 8 个 + 分数/权重/包装）。
+   * 3500 步就是几万次小对象分配，改成一次性分配的 Float64Array 逐步覆盖，降低 GC 压力。
+   * 所有数组下标 0 不用；每次调用都会把 1..max 全部写满，不存在跨期残留。
+   * 返回的 dR/dB 只在同一期内被 evoEvaluate 读取，不跨期保存。 */
+  const EVO_BUF = {
+    red: {
+      freq: new Float64Array(34), due: new Float64Array(34),
+      recent: new Float64Array(34), trans: new Float64Array(34)
+    },
+    blue: {
+      freq: new Float64Array(17), due: new Float64Array(17),
+      recent: new Float64Array(17), trans: new Float64Array(17)
+    },
+    sR: new Float64Array(34), sB: new Float64Array(17),
+    wR: new Float64Array(34), wB: new Float64Array(17)
+  };
+  const EVO_DIST = { red: EVO_BUF.red, blue: EVO_BUF.blue };
+
   function evoNewState(){
     return {
       n: 0,
@@ -2649,14 +2700,7 @@
 
   function evoDist(st){
     const n = st.n;
-    const red = {
-      freq: new Array(34).fill(0), due: new Array(34).fill(0),
-      recent: new Array(34).fill(0), trans: new Array(34).fill(0)
-    };
-    const blue = {
-      freq: new Array(17).fill(0), due: new Array(17).fill(0),
-      recent: new Array(17).fill(0), trans: new Array(17).fill(0)
-    };
+    const red = EVO_BUF.red, blue = EVO_BUF.blue;
 
     let tot = 0;
     for (let x = 1; x <= 33; x++){ red.freq[x] = st.freqR[x] + 1; tot += red.freq[x]; }
@@ -2719,11 +2763,11 @@
     } else {
       for (let x = 1; x <= 16; x++) blue.trans[x] = 1 / 16;
     }
-    return { red, blue };
+    return EVO_DIST;
   }
 
-  function evoScore(dist, w, max){
-    const out = new Array(max + 1).fill(0);
+  function evoScore(dist, w, max, buf){
+    const out = buf || new Array(max + 1).fill(0);
     for (let x = 1; x <= max; x++){
       out[x] = w.freq * dist.freq[x] + w.due * dist.due[x] +
                w.recent * dist.recent[x] + w.trans * dist.trans[x];
@@ -2805,12 +2849,6 @@
     return sel;
   }
 
-  function evoPickBlue(score){
-    let best = 1;
-    for (let x = 2; x <= 16; x++) if (score[x] > score[best]) best = x;
-    return best;
-  }
-
   function evoHash(s){
     let h = 2166136261 >>> 0;
     for (let i = 0; i < s.length; i++){
@@ -2852,10 +2890,10 @@
   /* 从学到的分布里抽 1 注：同一期 + 同一份数据 -> 同一结果，但相邻期不会挤在同样的 6 个号上 */
   function evoPredict(st, issue){
     const d = evoDist(st);
-    const sR = evoScore(d.red, st.wR, 33);
-    const sB = evoScore(d.blue, st.wB, 16);
+    const sR = evoScore(d.red, st.wR, 33, EVO_BUF.sR);
+    const sB = evoScore(d.blue, st.wB, 16, EVO_BUF.sB);
     const rnd = evoRng(evoHash(String(issue || "")));
-    const wR = new Array(34).fill(0), wB = new Array(17).fill(0);
+    const wR = EVO_BUF.wR, wB = EVO_BUF.wB;
     for (let x = 1; x <= 33; x++) wR[x] = Math.pow(Math.max(1e-12, sR[x] * 33), EVO_TEMP);
     for (let x = 1; x <= 16; x++) wB[x] = Math.pow(Math.max(1e-12, sB[x] * 16), EVO_TEMP);
 
@@ -2907,14 +2945,6 @@
     evoUpdateWeights(st.wB, llB);
   }
 
-  function evoNextIssue(){
-    const newest = DRAWS[0];
-    let year = Number(newest.code.slice(0, 4));
-    let seq = Number(newest.code.slice(4)) + 1;
-    if (seq > 999){ year++; seq = 1; }
-    return year + String(seq).padStart(3, "0");
-  }
-
   function runEvolution(){
     if (evoBusy) return;
     if (N <= EVO_START){
@@ -2939,8 +2969,9 @@
       const total = N - EVO_START;
 
       function stepChunk(){
-        const until = Math.min(N, t + 200);
-        while (t < until){
+        // 与回测一致：按 performance.now() 切 26ms 时间片，不再固定每块 200 步
+        const t0 = performance.now();
+        while (t < N && performance.now() - t0 < 26){
           const pred = evoPredict(st, CHRONO[t].code);
           const actual = CHRONO[t];
           evoEvaluate(st, pred, actual);
@@ -2961,8 +2992,8 @@
   }
 
   function finishEvolution(st){
-    const nextIssue = evoNextIssue();
-    const pred = evoPredict(st, nextIssue);
+    const nextCode = nextIssue(DRAWS[0].code);
+    const pred = evoPredict(st, nextCode);
     if (st.curve.length && st.curve[st.curve.length - 1].step !== st.steps){
       st.curve.push({
         step: st.steps,
@@ -2971,7 +3002,7 @@
     }
     evoResult = {
       pred,
-      nextIssue,
+      nextIssue: nextCode,
       steps: st.steps,
       redAvg: st.redHits / st.steps,
       blueRate: st.blueHits / st.steps * 100,
@@ -4222,10 +4253,8 @@
     $("#railLive").textContent = "已同步至 " + newest.code + " 期";
     $("#lastIssue").textContent = newest.code + " · " + newest.date;
 
-    // 目标期号推导
-    const y = Number(newest.code.slice(0, 4));
-    const seq = Number(newest.code.slice(4)) + 1;
-    $("#targetIssue").textContent = y + String(seq).padStart(3, "0");
+    // 目标期号推导（与自进化共用同一份「期号 +1」逻辑）
+    $("#targetIssue").textContent = nextIssue(newest.code);
     $("#poolTxt").textContent = `全量 ${N} 期`;
     updatePoolNote();
   }
