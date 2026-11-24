@@ -278,6 +278,17 @@
   .strat.on .nm{color:#FFD8D4}
   .strat.on .ds{color:var(--muted)}
 
+  .shape-opt{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+  .shape-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--sans);font-size:12px;color:var(--paper-dim);line-height:1.4}
+  .shape-toggle input{position:absolute;opacity:0;width:0;height:0}
+  .shape-toggle .track{position:relative;width:38px;height:20px;background:var(--line-2);border-radius:10px;flex-shrink:0;transition:background .2s}
+  .shape-toggle .track i{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+  .shape-toggle input:checked + .track{background:var(--red-lit)}
+  .shape-toggle input:checked + .track i{transform:translateX(18px)}
+  .shape-toggle .txt{font-weight:500}
+  .shape-toggle .txt em{font-style:normal;color:var(--dim);font-weight:400;font-size:11px;margin-left:4px}
+  .shape-hint{margin-top:8px;font-family:var(--sans);font-size:11px;color:var(--dim);line-height:1.6}
+
   .gauge{margin-top:auto;padding-top:22px;border-top:1px solid var(--line)}
   .gauge-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
   .gauge-track{height:3px;background:var(--line);position:relative;overflow:hidden;margin-bottom:14px}
@@ -371,6 +382,18 @@
   }
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.08em;margin-top:14px}
   .legend i{display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px}
+
+  /* ───────── 热度说明（P0-5：z 分数 + 经验贝叶斯收缩） ───────── */
+  .heat-note{
+    margin-top:24px;border-top:1px dashed var(--line-2);padding-top:18px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .heat-line{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:start;font-size:12px;line-height:1.7;color:var(--muted)}
+  .heat-line .hk{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;padding-top:4px}
+  .heat-line b{color:var(--paper-dim);font-weight:600}
+  @media (max-width:560px){
+    .heat-line{grid-template-columns:1fr;gap:2px}
+  }
 
   /* ───────── 胆码 ───────── */
   .lock-row{
@@ -471,6 +494,20 @@
   .bt-empty{text-align:center;color:var(--dim);padding:22px 12px !important}
   .bt-foot{margin-top:12px;font-size:10px;color:var(--dim);line-height:1.8}
   .bt-foot b{color:var(--muted);font-weight:500}
+  /* P0-2/P0-3: 回测窗口与功效信息 */
+  .bt-window-bar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .bt-window-label{
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--muted);
+    text-transform:uppercase;white-space:nowrap;
+  }
+  .bt-window-tip{
+    font-family:var(--mono);font-size:9.5px;color:var(--dim);line-height:1.7;
+    flex:1;min-width:220px;
+  }
+  .bt-window-tip b{color:var(--gold);font-weight:500}
 
   /* 自进化预测 */
   .evo-panel{border:1px solid var(--line);background:var(--bg-2)}
@@ -783,7 +820,7 @@
     <div class="block-head">
       <span class="idx">01</span>
       <h2>算法体检</h2>
-      <span class="note">打开页面自动回测 · 四策略 · 最近 120 期</span>
+      <span class="note">打开页面自动回测 · 四策略 · 窗口可选 120 / 500 / 全部</span>
     </div>
 
     <div class="lab-grid">
@@ -798,8 +835,15 @@
           <span id="btRedCi">95% CI —</span>
         </div>
         <div class="bars" id="btBars"></div>
-        <div style="margin-top:20px">
+        <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <button class="btn ghost" id="btnBacktest" style="padding:10px 22px;font-size:12.5px">重跑四策略回测</button>
+          <label style="display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim)">
+            随机种子
+            <input id="btSeed" type="text" inputmode="numeric" value="20261124" maxlength="10"
+              title="同一种子 + 同一批数据 = 同一结果；留空则用默认种子"
+              style="width:94px;background:rgba(255,255,255,.03);border:1px solid var(--line-2);color:var(--paper);font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 10px;outline:none;text-align:center">
+          </label>
+          <span style="font-size:10px;color:var(--dim);line-height:1.7">同种子结果固定<br>四策略同期共用随机流</span>
         </div>
       </div>
 
@@ -816,6 +860,10 @@
           <span>相对随机</span>
           <span id="btGap">—</span>
         </div>
+        <div class="vs-line" style="border-top:0;padding-top:4px;margin-top:4px">
+          <span>本样本功效</span>
+          <span id="btPower">—</span>
+        </div>
         <div class="verdict" id="verdict">
           页面打开即自动在同一批最近 120 期上把四种策略各跑一遍：
           每一期都只用它<strong>之前</strong>的数据推演，再与真实开奖逐期比对。<br><br>
@@ -830,17 +878,26 @@
         <h4>Four Strategies / 四策略对比</h4>
         <span id="btMeta">最近 120 期 · 每期 1 注 · 成本 ¥2/注</span>
       </div>
+      <div class="bt-window-bar">
+        <span class="bt-window-label">回测窗口</span>
+        <div class="seg" id="btWindow" role="group" aria-label="回测窗口">
+          <button type="button" data-w="120" class="on">120 期</button>
+          <button type="button" data-w="500">500 期</button>
+          <button type="button" data-w="all">全部</button>
+        </div>
+        <span class="bt-window-tip" id="btWindowTip">正在计算本样本功效…</span>
+      </div>
       <div class="bt-scroll">
         <table class="bt-table">
           <thead>
             <tr>
               <th>策略</th>
-              <th>红球均值（95% CI）</th>
+              <th>红球均值（Bootstrap 95% CI）</th>
               <th>蓝球命中率（95% CI）</th>
               <th>相对随机</th>
               <th>最高</th>
               <th>固定奖回收</th>
-              <th>结论</th>
+              <th>校正后结论</th>
             </tr>
           </thead>
           <tbody id="btBody">
@@ -850,8 +907,12 @@
       </div>
       <div class="bt-foot">
         成本按 <b>2 元/注</b> 计算；固定奖按三等奖 3,000、四等奖 200、五等奖 10、六等奖 5 元计算。
-        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。置信区间为 95%，覆盖随机期望即视为差异不显著。
-        「纯随机构造」是对照组，它同样可能因抽样波动落在区间外——这正是 120 期样本不能当结论的原因。
+        一、二等奖为浮动奖，单独计数，不计入固定奖回收率。<br>
+        <b>统计口径（P0 修订）</b>：红球命中数取值 0–6、分布右偏，其 95% CI 改用 <b>Bootstrap 重抽样</b>（不再用正态近似）；蓝球命中率仍用 Wilson 区间。
+        四种策略 × 红/蓝两项指标 = <b>8 次检验</b>，若不校正家族错误率约 1−0.95⁸ ≈ <b>34%</b>；
+        这里对 8 个置换检验 p 值做 <b>BH-FDR 校正</b>（同时给出 Bonferroni 阈值 α/8 = 0.00625）后再判定显著性。
+        p 值来自以「纯随机构造」 hit 分布为零假设的随机化/置换检验（蓝球用二项随机抽样），不再只给「显著 / 不显著」。
+        「纯随机构造」本身也是一条样本，同样可能落在区间外——这正是短窗口不能当结论的原因，窗口与最小可检出效应见上方说明。
       </div>
     </div>
   </section>
@@ -861,7 +922,7 @@
     <div class="block-head">
       <span class="idx">02</span>
       <h2>号码热力矩阵</h2>
-      <span class="note">点击格子锁定为胆码 · 上：出现次数 · 下：当前遗漏</span>
+      <span class="note">格子里的数字是 z 分数（相对随机期望的标准差）· 点击格子锁定为胆码</span>
     </div>
 
     <div class="matrix-grid">
@@ -871,13 +932,15 @@
       <div>
         <div class="grid-16" id="gridBlue"></div>
         <div class="legend">
-          <span><i style="background:rgba(200,22,30,.65)"></i>高于均值</span>
-          <span><i style="background:rgba(90,120,160,.45)"></i>低于均值</span>
+          <span><i style="background:rgba(200,22,30,.65)"></i>z &gt; 0 高于随机期望</span>
+          <span><i style="background:rgba(90,120,160,.45)"></i>z &lt; 0 低于随机期望</span>
           <span><i style="border:1px solid var(--red-lit);background:transparent"></i>本期推演选中</span>
           <span><i style="outline:1px solid var(--gold);outline-offset:-1px;background:transparent"></i>已锁胆码</span>
         </div>
       </div>
     </div>
+
+    <div class="heat-note" id="heatNote"></div>
   </section>
 
   <!-- 实验二：检验策略 -->
@@ -1035,7 +1098,7 @@
         <div class="strategies" id="strategies">
           <button class="strat on" data-s="hot">
             <span class="nm">热号追踪 <i>HOT</i></span>
-            <span class="ds">跟随历史高频号码，近 30 期趋势加权最重</span>
+            <span class="ds">按经验贝叶斯收缩后的 z 分数跟随相对高频号码，±3σ 内视为噪声</span>
           </button>
           <button class="strat" data-s="due">
             <span class="nm">遗漏回补 <i>DUE</i></span>
@@ -1043,12 +1106,21 @@
           </button>
           <button class="strat" data-s="balance">
             <span class="nm">均衡混合 <i>MIX</i></span>
-            <span class="ds">热度、遗漏、近期各占一份权重</span>
+            <span class="ds">z 分数（已收缩）、遗漏、近期各占一份权重</span>
           </button>
           <button class="strat" data-s="pure">
             <span class="nm">纯随机构造 <i>RNG</i></span>
             <span class="ds">等概率抽取，作为对照组</span>
           </button>
+        </div>
+
+        <div class="shape-opt">
+          <label class="shape-toggle" title="双色球一、二等奖为均分奖：中奖注数越多，单注奖金越低。观感过滤会把号码推向大众也爱选的形状（和值居中、奇偶均衡、三区全有），虽然中奖概率不变，但期望奖金下降。建议默认关闭。">
+            <input type="checkbox" id="shapeFilter" autocomplete="off">
+            <span class="track"><i></i></span>
+            <span class="txt">观感过滤 <em>默认关闭</em></span>
+          </label>
+          <p class="shape-hint" id="shapeHint">关闭时按策略权重直接抽样；开启时尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。C(33,6)=1,107,568 全等概率，过滤仅改变号码形状分布，不改变中奖概率；但因一二等奖均分，越贴近大众习惯期望奖金越低。</p>
         </div>
 
         <div class="gauge">
@@ -1212,32 +1284,99 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
     return { n, fR, fB, gapR, gapB, recR, recB, W };
   }
 
-  /* 归一化评分：热(0-1) / 遗漏(0-1) / 近期(0-1) */
+  /* ══════════ 1b. 冷热号：z 分数 + 经验贝叶斯收缩（P0-5） ══════════
+     旧实现把频次做 min–max 归一化再喂给 exp(beta·comp)：min–max 会强行把
+     这份样本里的极值拉到 0 和 1，纯噪声也能造出 e^4.2≈67 倍的权重差。
+     现在改成「相对随机期望的 z 分数」：
+       z  = (f[x] − N·p) / √(N·p(1−p))     p = 6/33（红）/ 1/16（蓝）
+       z̃  = k·z,  k = τ̂²/(τ̂²+1)            经验贝叶斯向 0 收缩
+       hot = 0.5 + 0.5·z̃/3                 ±3σ 映射到 [0,1]
+     τ̂² = max(0, Var(z) − 1)：Var(z) 里 1 是纯抽样噪声，多出来的部分才是
+     「号码层面的系统性偏差」；没有就收缩到 0（等价于认定冷热号全是噪声）。 */
+
+  const Z_REF = 3;                      // ±3σ 作为 hot 量程的端点
+
+  /* 正态-正态经验贝叶斯收缩：z = θ + ε，ε~N(0,1)，θ~N(0,τ²) → k = τ²/(τ²+1) */
+  function ebShrink(zs){
+    const M = zs.length;
+    if (!M) return { k:0, tau2:0, varZ:0 };
+    let mean = 0;
+    for (const v of zs) mean += v;
+    mean /= M;
+    let ss = 0;
+    for (const v of zs){ const d = v - mean; ss += d * d; }
+    const varZ = M > 1 ? ss / (M - 1) : 0;
+    const tau2 = Math.max(0, varZ - 1);        // 超出抽样噪声的离散度
+    return { k: tau2 / (tau2 + 1), tau2, varZ };
+  }
+
+  /* 频次 z 诊断：原始 z、收缩系数、量程，供界面展示 */
+  function freqZ(S, range, which){
+    const isRed = which === "red";
+    const f = isRed ? S.fR : S.fB;
+    const p = isRed ? 6 / 33 : 1 / 16;          // 每期开出的概率
+    const mu = S.n * p;                          // 随机期望出现次数
+    const sd = Math.sqrt(S.n * p * (1 - p));     // 二项抽样标准差
+    const z = {}, arr = [];
+    for (const x of range){
+      const v = sd > 0 ? (f[x] - mu) / sd : 0;
+      z[x] = v; arr.push(v);
+    }
+    const eb = ebShrink(arr);
+    let zMin = Infinity, zMax = -Infinity, maxAbs = 0;
+    for (const v of arr){
+      if (v < zMin) zMin = v;
+      if (v > zMax) zMax = v;
+      const a = Math.abs(v);
+      if (a > maxAbs) maxAbs = a;
+    }
+    let fMin = Infinity, fMax = -Infinity;
+    for (const x of range){
+      if (f[x] < fMin) fMin = f[x];
+      if (f[x] > fMax) fMax = f[x];
+    }
+    return { z, mu, sd, k: eb.k, tau2: eb.tau2, varZ: eb.varZ, zMin, zMax, maxAbs, fMin, fMax, n: S.n, p };
+  }
+
+  /* 评分：热(z 收缩后 0-1) / 遗漏(0-1) / 近期(0-1) */
   function scores(S, range, which){
     const isRed = which === "red";
     const f   = isRed ? S.fR : S.fB;
     const gap = isRed ? S.gapR : S.gapB;
     const rec = isRed ? S.recR : S.recB;
-    const W   = S.W;
 
-    let fMin = Infinity, fMax = -Infinity, rMax = 1;
-    for (const x of range){
-      if (f[x] < fMin) fMin = f[x];
-      if (f[x] > fMax) fMax = f[x];
-      if (rec[x] > rMax) rMax = rec[x];
-    }
-    const fSpan = Math.max(1, fMax - fMin);
+    const FZ = freqZ(S, range, which);
+
+    let rMax = 1;
+    for (const x of range) if (rec[x] > rMax) rMax = rec[x];
 
     const out = {};
     for (const x of range){
       const expGap = S.n / Math.max(1, f[x]);                 // 期望回归间隔
-      const hot = (f[x] - fMin) / fSpan;                      // 0..1
+      const z = FZ.z[x];
+      const zShrunk = FZ.k * z;                               // 收缩后的 z（后验均值）
+      const hot = Math.max(0, Math.min(1, 0.5 + 0.5 * zShrunk / Z_REF));  // ±3σ → 0..1
       const due = Math.min(1, (gap[x] / Math.max(1, expGap)) / 2);  // 0..1
       const recent = rec[x] / Math.max(1, rMax);              // 0..1
-      out[x] = { hot, due, recent, freq: f[x], gap: gap[x], expGap, recN: rec[x] };
+      out[x] = { hot, due, recent, freq: f[x], z, zShrunk, gap: gap[x], expGap, recN: rec[x] };
     }
     return out;
   }
+
+  /* 可复现随机源：mulberry32，同一种子给出同一串 [0,1) 均匀数 */
+  function mulberry32(seed){
+    let a = seed >>> 0;
+    return function(){
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* 当前随机源：推演默认真随机，回测期间临时换成固定种子 */
+  let curRng = Math.random;
 
   /* 加权无放回抽取 */
   function sample(pool, weights, k){
@@ -1246,7 +1385,7 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
     while (res.length < k && avail.length){
       let total = 0;
       for (const x of avail) total += weights[x];
-      let r = Math.random() * total;
+      let r = curRng() * total;
       let idx = avail.length - 1;
       for (let i = 0; i < avail.length; i++){
         r -= weights[avail[i]];
@@ -1268,20 +1407,38 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
 
   let curStrat = "hot";
 
+  /* 观感过滤（结构约束）：默认关闭。
+   * 一、二等奖为均分奖：中奖注数越多，单注奖金越低。
+   * 观感过滤把号码推向大众也爱选的形状（和值居中、奇偶均衡、三区全有），
+   * 虽然中奖概率不变（C(33,6)=1,107,568 注等概率），但期望奖金下降。
+   * 实测：仅 54.2% 的组合通过过滤，45.8% 被排除。
+   */
+  const SHAPE_KEY = "ssq.shapeFilter";
+  let shapeFilterOn = false;
+  try { shapeFilterOn = localStorage.getItem(SHAPE_KEY) === "1"; } catch(e) {}
+  function setShapeFilter(on){
+    shapeFilterOn = !!on;
+    try { localStorage.setItem(SHAPE_KEY, shapeFilterOn ? "1" : "0"); } catch(e) {}
+  }
+
   function buildWeights(sc, cfg, range, jitterFn){
     const w = {};
     for (const x of range){
       const s = sc[x];
       const comp = cfg.hot * s.hot + cfg.due * s.due + cfg.recent * s.recent;
       // 微扰：让同一策略每次结果不完全相同
-      const jitter = 1 + (jitterFn ? jitterFn(x) : (Math.random() - 0.5)) * 0.22;
+      const jitter = 1 + (jitterFn ? jitterFn(x) : (curRng() - 0.5)) * 0.22;
       w[x] = cfg.beta === 0 ? 1 : Math.exp(cfg.beta * comp) * jitter;
     }
     return w;
   }
 
-  /* 结构约束：避免全偶/全奇、和值极偏、某一区完全空缺的"畸形注" */
+  /* 结构约束（观感过滤）：避免全偶/全奇、和值极偏、某一区完全空缺的"畸形注"。
+   * 默认关闭——C(33,6)=1,107,568 注全等概率，过滤不改变中奖概率；
+   * 但一、二等奖均分，越贴近大众选号习惯（观感越"正常"），期望奖金越低。
+   */
   function okShape(red){
+    if (!shapeFilterOn) return true;  // 观感过滤默认关闭：不做任何结构约束
     const sum = red.reduce((a, b) => a + b, 0);
     const odd = red.filter(x => x % 2 === 1).length;
     const big = red.filter(x => x >= 17).length;
@@ -1819,46 +1976,104 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
   }
 
   /* ══════════ 5. 渲染：热力矩阵 ══════════ */
+  const fmtZ = z => (z >= 0 ? "+" : "-") + Math.abs(z).toFixed(2);
+
   function renderMatrix(){
     const S = statsOf(DRAWS);
     const scR = scores(S, RED_RANGE, "red");
     const scB = scores(S, BLUE_RANGE, "blue");
-
-    const avgR = N * 6 / 33;
-    const avgB = N / 16;
+    const zR  = freqZ(S, RED_RANGE, "red");
+    const zB  = freqZ(S, BLUE_RANGE, "blue");
 
     const gR = $("#gridRed"), gB = $("#gridBlue");
     gR.innerHTML = ""; gB.innerHTML = "";
 
     RED_RANGE.forEach(x => {
       const s = scR[x];
-      const d = s.freq - avgR;
-      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(d) / 52);
+      const z = s.z;
+      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(z) / Z_REF);
       const cell = document.createElement("div");
-      cell.className = "cell" + (d > 8 ? " hot" : d < -8 ? " cold" : "");
+      cell.className = "cell" + (z >= 1 ? " hot" : z <= -1 ? " cold" : "");
       cell.dataset.r = x;
-      cell.style.background = d >= 0
+      cell.style.background = z >= 0
         ? `rgba(198,20,30,${ratio.toFixed(3)})`
         : `rgba(74,102,146,${ratio.toFixed(3)})`;
-      cell.title = `${pad(x)} 号｜出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
-      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${s.freq}·${s.gap}</span>`;
+      cell.title = `${pad(x)} 号｜z = ${fmtZ(s.z)}σ（收缩后 ${fmtZ(s.zShrunk)}σ）｜` +
+                   `出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
+      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${fmtZ(s.z)}</span>`;
       gR.appendChild(cell);
     });
 
     BLUE_RANGE.forEach(x => {
       const s = scB[x];
-      const d = s.freq - avgB;
-      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(d) / 30);
+      const z = s.z;
+      const ratio = 0.05 + 0.62 * Math.min(1, Math.abs(z) / Z_REF);
       const cell = document.createElement("div");
-      cell.className = "cell" + (d > 5 ? " hot" : d < -5 ? " cold" : "");
+      cell.className = "cell" + (z >= 1 ? " hot" : z <= -1 ? " cold" : "");
       cell.dataset.b = x;
-      cell.style.background = d >= 0
+      cell.style.background = z >= 0
         ? `rgba(198,20,30,${ratio.toFixed(3)})`
         : `rgba(74,102,146,${ratio.toFixed(3)})`;
-      cell.title = `${pad(x)} 号｜出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
-      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${s.freq}·${s.gap}</span>`;
+      cell.title = `${pad(x)} 号｜z = ${fmtZ(s.z)}σ（收缩后 ${fmtZ(s.zShrunk)}σ）｜` +
+                   `出现 ${s.freq} 次｜当前遗漏 ${s.gap} 期｜期望间隔 ${s.expGap.toFixed(1)} 期｜点击锁定胆码`;
+      cell.innerHTML = `<span class="n">${pad(x)}</span><span class="t">${fmtZ(s.z)}</span>`;
       gB.appendChild(cell);
     });
+
+    renderHeatNote(S, scR, scB, zR, zB);
+  }
+
+  /* ══════════ 5a. 热度说明：z 分数 + 收缩系数 + 权重放大倍数 ══════════ */
+  function renderHeatNote(S, scR, scB, zR, zB){
+    const el = $("#heatNote");
+    if (!el) return;
+
+    const spread = arr => Math.max.apply(null, arr) - Math.min.apply(null, arr);
+    const hotSpread = spread(RED_RANGE.map(x => scR[x].hot));
+    const dueSpread = spread(RED_RANGE.map(x => scR[x].due));
+    const recSpread = spread(RED_RANGE.map(x => scR[x].recent));
+
+    // 热号追踪策略：旧版冷热通道用 min–max 归一化（跨度恒为 1），新版是 z 收缩后的跨度
+    const cfg = STRATS.hot;
+    const fSpan = Math.max(1, zR.fMax - zR.fMin);
+    const legacyHot = x => (S.fR[x] - zR.fMin) / fSpan;
+    // 复刻 buildWeights 的 comp（不含 jitter），直接量出真实权重的最大/最小之比
+    const compOld = RED_RANGE.map(x => cfg.hot * legacyHot(x) + cfg.due * scR[x].due + cfg.recent * scR[x].recent);
+    const compNew = RED_RANGE.map(x => cfg.hot * scR[x].hot + cfg.due * scR[x].due + cfg.recent * scR[x].recent);
+    const actualOld = Math.exp(cfg.beta * spread(compOld));
+    const actualNew = Math.exp(cfg.beta * spread(compNew));
+    const chanOld = Math.exp(cfg.beta * cfg.hot * 1);        // 冷热频次通道单独
+    const chanNew = Math.exp(cfg.beta * cfg.hot * hotSpread);
+    const worstOld = Math.exp(cfg.beta * (cfg.hot * 1 + cfg.due * 1 + cfg.recent * 1));
+    const worstNew = Math.exp(cfg.beta * (cfg.hot * hotSpread + cfg.due * dueSpread + cfg.recent * recSpread));
+
+    const within = zR.maxAbs < 3;
+    const blueWithin = zB.maxAbs < 3;
+
+    el.innerHTML =
+      `<div class="heat-line"><span class="hk">频次 z 分数</span>` +
+      `<span>红球 33 个号码落在 <b>${fmtZ(zR.zMin)}σ ~ ${fmtZ(zR.zMax)}σ</b>，` +
+      `最大 |z| = <b>${zR.maxAbs.toFixed(2)}σ</b>${within ? "（小于 3σ）" : "（达到或超过 3σ）"}；` +
+      `33 个二项变量在纯随机下的 |z| 期望最大值约 2.3 —— 这份离散度就是噪声本身。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">经验贝叶斯收缩</span>` +
+      `<span>τ̂² = ${zR.tau2.toFixed(2)}（超出抽样噪声 Var(z)−1 的部分），` +
+      `收缩系数 k = <b>${zR.k.toFixed(2)}</b>，收缩后 z ∈ ${fmtZ(zR.zMin * zR.k)}σ ~ ${fmtZ(zR.zMax * zR.k)}σ；` +
+      `蓝球 z ∈ ${fmtZ(zB.zMin)}σ ~ ${fmtZ(zB.zMax)}σ，k = <b>${zB.k.toFixed(2)}</b>` +
+      `${zB.k === 0 ? "（未检出任何号码层面的偏离）" : ""}。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">权重放大</span>` +
+      `<span>热号追踪策略下，33 个红球的实际最大/最小权重之比从旧 min–max 归一化的 ` +
+      `<b>${actualOld.toFixed(1)}×</b> 降到 <b>${actualNew.toFixed(1)}×</b>` +
+      `（其中冷热频次通道 ${chanOld.toFixed(1)}× → ${chanNew.toFixed(1)}×；` +
+      `各通道同时取极值的理论上限 ${worstOld.toFixed(1)}× → ${worstNew.toFixed(1)}×）。</span></div>` +
+
+      `<div class="heat-line"><span class="hk">结论</span>` +
+      `<span>${within && blueWithin
+        ? "红球与蓝球的全部号码都落在 ±3σ 内 —— 没有哪个号码真的「热」或「冷」"
+        : "存在 |z| 达到 3σ 的号码，但样本量有限，仍需谨慎"}，` +
+      `热号只是噪声的别名。格子里的数字就是 z 值（相对随机期望的标准差），` +
+      `负号表示比随机期望更少出现。</span></div>`;
   }
 
   /* ══════════ 5b. 胆码锁定 ══════════ */
@@ -1976,14 +2191,31 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
   }
 
   /* ══════════ 6. 回测（四策略对比 + 置信区间 + 固定奖回收） ══════════ */
-  const BT_N = Math.min(120, N - 1);
+  /* P0-2: 回测窗口可在 120 / 500 / 全部 之间切换，BT_N 由窗口决定 */
+  let btWindow = "120";
+  let BT_N = Math.min(120, N - 1);
   const BT_COST = 2;
   const BT_RED_EXPECT = 6 * 6 / 33;
   const BT_BLUE_EXPECT = 1 / 16;
   const BT_PRIZE = { 1:0, 2:0, 3:3000, 4:200, 5:10, 6:5 };
   const BT_KEYS = Object.keys(STRATS);
   let btResults = null;
+  let btStatCache = null;      // 缓存已算过统计量的那次 btResults
+  let btPureRedMean = 0;       // 「纯随机构造」的红球命中均值，作置换检验基准
   let btViewKey = "hot";
+  const BT_SEED_DEFAULT = 20261124;
+
+  /* 回测种子：输入框留空或非法时退回默认种子 */
+  function btSeed(){
+    const el = $("#btSeed");
+    const v = parseInt(el ? el.value : "", 10);
+    return Number.isFinite(v) ? (v >>> 0) : BT_SEED_DEFAULT;
+  }
+
+  /* 每期种子：同一期的四个策略都从它重置，实现共同随机数 */
+  function btPeriodSeed(base, i){
+    return (base + Math.imul(i, 0x9E3779B1)) >>> 0;
+  }
 
   function meanCi(sum, sumSq, n){
     const mean = sum / n;
@@ -2009,6 +2241,160 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
     return sig === "below" ? "显著低于随机" : sig === "above" ? "显著高于随机" : "与随机无显著差异";
   }
 
+  /* ── P0-2 / P0-3 / P0-7 统计增强：Bootstrap CI · 置换检验 · BH-FDR · 功效 ──
+     只消费 finish() 已经写进 btResults 的聚合量（hitDist / blueHits / sd），
+     不触碰 stepOnce() / generate() / buildWeights()。 */
+  const BT_Z975 = 1.959964;              // 95% 双侧临界值
+  const BT_Z80  = 0.841621;              // 80% 把握度临界值
+  const BT_BONFERRONI = 0.05 / 8;        // 8 次检验的 Bonferroni 单次阈值 = 0.00625
+
+  // 统计层私有确定性 RNG：与回测模拟的随机种子相互独立，保证同一窗口重跑统计结论稳定。
+  function btStatRng(seed){
+    let a = seed >>> 0;
+    return function(){
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // hitDist[0..6] 完整记录了每期红球命中数（取值仅 0–6），可直接还原原始样本。
+  function btHitSample(hitDist){
+    const out = [];
+    for (let h = 0; h < hitDist.length; h++)
+      for (let j = 0; j < hitDist[h]; j++) out.push(h);
+    return out;
+  }
+
+  function btDistMean(hitDist){
+    let s = 0, n = 0;
+    for (let h = 0; h < hitDist.length; h++){ s += h * hitDist[h]; n += hitDist[h]; }
+    return n ? s / n : 0;
+  }
+
+  // P0-7：红球命中数高度右偏，改用 bootstrap 百分位区间替代正态近似。
+  function bootstrapHitCi(hitDist, n, B){
+    const sample = btHitSample(hitDist);
+    if (!sample.length) return { lo:0, hi:0, se:0 };
+    const rnd = btStatRng(0x5EED ^ Math.imul(n, 2654435761));
+    const means = new Float64Array(B);
+    for (let b = 0; b < B; b++){
+      let s = 0;
+      for (let i = 0; i < n; i++) s += sample[(rnd() * sample.length) | 0];
+      means[b] = s / n;
+    }
+    means.sort();
+    let m = 0;
+    for (let b = 0; b < B; b++) m += means[b];
+    m /= B;
+    let v = 0;
+    for (let b = 0; b < B; b++) v += (means[b] - m) * (means[b] - m);
+    return {
+      lo: means[Math.floor(0.025 * B)],
+      hi: means[Math.min(B - 1, Math.floor(0.975 * B))],
+      se: Math.sqrt(v / (B - 1))
+    };
+  }
+
+  // P0-3：以「纯随机构造」的 hit 分布为零假设做随机化/置换检验。
+  // 统计量 = |策略红球均值 − 纯随机均值|；原假设下从纯随机样本有放回重抽样。
+  function btRedPermP(obsMean, pureMean, pureHitDist, n, B){
+    const sample = btHitSample(pureHitDist);
+    if (!sample.length) return 1;
+    const rnd = btStatRng(0xA11CE ^ Math.imul(n, 2246822519));
+    const obsDev = Math.abs(obsMean - pureMean);
+    let ge = 0;
+    for (let b = 0; b < B; b++){
+      let s = 0;
+      for (let i = 0; i < n; i++) s += sample[(rnd() * sample.length) | 0];
+      if (Math.abs(s / n - pureMean) >= obsDev - 1e-12) ge++;
+    }
+    return (ge + 1) / (B + 1);
+  }
+
+  // 蓝球命中率：理论随机率 p0 = 1/16 下的二项随机抽样双侧 p 值。
+  function btBlueMcP(k, n, p0, B){
+    const rnd = btStatRng(0xB10C ^ Math.imul(n, 3266489917));
+    const obsDev = Math.abs(k / n - p0);
+    let ge = 0;
+    for (let b = 0; b < B; b++){
+      let c = 0;
+      for (let i = 0; i < n; i++) if (rnd() < p0) c++;
+      if (Math.abs(c / n - p0) >= obsDev - 1e-12) ge++;
+    }
+    return (ge + 1) / (B + 1);
+  }
+
+  // P0-3：Benjamini–Hochberg FDR 校正，返回与输入同序的 q 值。
+  function bhFdr(pvals){
+    const m = pvals.length;
+    const order = pvals.map((p, i) => ({ p, i })).sort((a, b) => a.p - b.p);
+    const q = new Array(m);
+    let prev = 1;
+    for (let r = m; r >= 1; r--){
+      prev = Math.min(prev, order[r - 1].p * m / r);
+      q[order[r - 1].i] = Math.min(1, prev);
+    }
+    return q;
+  }
+
+  // P0-2：本样本最小可检出效应（80% 把握度、α=0.05 双侧）。
+  function btMde(sd, n){
+    const se = sd / Math.sqrt(n);
+    const seB = Math.sqrt(BT_BLUE_EXPECT * (1 - BT_BLUE_EXPECT) / n);
+    return {
+      red: (BT_Z975 + BT_Z80) * se,
+      redHalf: BT_Z975 * se,
+      blue: (BT_Z975 + BT_Z80) * seB,
+      blueHalf: BT_Z975 * seB
+    };
+  }
+
+  function btWindowLabel(){
+    return btWindow === "all" ? `全部 ${BT_N} 期` : `${BT_N} 期`;
+  }
+
+  function updateBtWindowTip(){
+    const tip = $("#btWindowTip");
+    if (!tip) return;
+    const sd = (btResults && btResults.pure) ? btResults.pure.red.sd
+             : Math.sqrt(6 * (6 / 33) * (27 / 33) * (27 / 32));
+    const m = btMde(sd, BT_N);
+    tip.innerHTML =
+      `窗口 ${btWindowLabel()}：95% CI 半宽 红 ±${m.redHalf.toFixed(2)} 个 / 蓝 ±${(m.blueHalf * 100).toFixed(1)}pp；` +
+      `<b>本样本最小可检出效应（80% 把握度）红 ±${m.red.toFixed(2)} 个 / 蓝 ±${(m.blue * 100).toFixed(1)}pp</b>`;
+  }
+
+  // 统计结果缓存：finish() 每次写入全新的 btResults 对象，按对象身份判断是否已算过。
+  function ensureBtStats(){
+    if (!btResults || btStatCache === btResults) return;
+    const B = BT_N > 600 ? 800 : 2000;
+    const pureMean = btDistMean(btResults.pure.hitDist);
+    btPureRedMean = pureMean;
+    BT_KEYS.forEach(k => {
+      const r = btResults[k];
+      r.stat = {
+        redBoot: bootstrapHitCi(r.hitDist, BT_N, B),
+        redP: btRedPermP(r.red.mean, pureMean, btResults.pure.hitDist, BT_N, B),
+        blueP: btBlueMcP(r.blueHits, BT_N, BT_BLUE_EXPECT, B),
+        mde: btMde(r.red.sd, BT_N)
+      };
+    });
+    const qRed = bhFdr(BT_KEYS.map(k => btResults[k].stat.redP));
+    const qBlue = bhFdr(BT_KEYS.map(k => btResults[k].stat.blueP));
+    BT_KEYS.forEach((k, i) => {
+      const s = btResults[k].stat;
+      s.qRed = qRed[i];
+      s.qBlue = qBlue[i];
+      s.sigRed = qRed[i] < 0.05;
+      s.sigBlue = qBlue[i] < 0.05;
+    });
+    btStatCache = btResults;
+    updateBtWindowTip();
+  }
+
   function signed(v, digits){
     return (v >= 0 ? "+" : "") + v.toFixed(digits);
   }
@@ -2029,13 +2415,17 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
       };
     });
     const statsCache = new Array(BT_N);
+    const seed = btSeed();
     let i = 0;
 
     // DRAWS[i] 为待测期，只能用 DRAWS[i+1..] 的数据
     function stepOnce(){
       const S = statsCache[i] || (statsCache[i] = statsOf(DRAWS, i + 1));
       const actual = DRAWS[i];
+      const periodSeed = btPeriodSeed(seed, i);
       for (const k of BT_KEYS){
+        // 共同随机数：同期四个策略各自从同一条随机流开始，差异只来自权重
+        curRng = mulberry32(periodSeed);
         const g = generate(S, k, null);
         let hit = 0;
         for (let t = 0; t < 6; t++) if (actual.red.indexOf(g.red[t]) >= 0) hit++;
@@ -2052,6 +2442,7 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
           a.fixed += BT_PRIZE[tier] || 0;
         }
       }
+      curRng = Math.random;   // 回测片间/结束后「开始推演」仍是真随机
       i++;
     }
 
@@ -2104,21 +2495,25 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
   function renderBtTable(){
     const tbody = $("#btBody");
     if (!tbody || !btResults) return;
+    ensureBtStats();
     tbody.innerHTML = "";
     BT_KEYS.forEach(k => {
       const r = btResults[k];
+      const s = r.stat;
       const redDiff = r.red.mean - BT_RED_EXPECT;
       const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
-      const bothFlat = r.redSig === "flat" && r.blueSig === "flat";
-      const anyAbove = r.redSig === "above" || r.blueSig === "above";
-      const verdict = bothFlat ? "无显著差异" : anyAbove ? "高于随机" : "低于随机";
+      const bothFlat = !s.sigRed && !s.sigBlue;
+      const anyAbove = (s.sigRed && r.red.mean > btPureRedMean) ||
+                       (s.sigBlue && r.blueP > BT_BLUE_EXPECT);
+      const verdict = bothFlat ? "校正后无差异" : anyAbove ? "校正后偏高" : "校正后偏低";
       const vClass = bothFlat ? "sig-flat" : anyAbove ? "sig-above" : "sig-below";
+      const qLine = `红 q=${s.qRed.toFixed(3)} (p=${s.redP.toFixed(3)}) · 蓝 q=${s.qBlue.toFixed(3)} (p=${s.blueP.toFixed(3)})`;
       const tr = document.createElement("tr");
       tr.dataset.k = k;
       if (k === btViewKey) tr.classList.add("on");
       tr.innerHTML =
         `<td><div class="nm">${r.label}</div><div class="ci">${k === "pure" ? "随机对照" : "策略"}</div></td>` +
-        `<td>${r.red.mean.toFixed(2)}<div class="ci">95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}</div></td>` +
+        `<td>${r.red.mean.toFixed(2)}<div class="ci">Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}</div></td>` +
         `<td>${(r.blueP * 100).toFixed(2)}%<div class="ci">95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%</div></td>` +
         `<td class="sig-${r.redSig}">红 ${signed(redDiff, 2)}<div class="ci sig-${r.blueSig}">蓝 ${signed(blueDiff, 1)}pp</div></td>` +
         `<td>${r.best} 红<div class="ci">蓝球 ${r.blueHits} 次</div></td>` +
@@ -2126,8 +2521,8 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
           `<div class="ci">3等${r.tiers[3]} 4等${r.tiers[4]} 5等${r.tiers[5]} 6等${r.tiers[6]}</div>` +
           (r.floating ? `<div class="ci warn">浮动奖 ${r.floating} 次</div>` : "") +
         `</td>` +
-        `<td class="${vClass}">${verdict}</td>`;
-      tr.title = "点击查看该策略的命中分布";
+        `<td class="${vClass}">${verdict}<div class="ci">${qLine}</div></td>`;
+      tr.title = "点击查看该策略的命中分布（p/q 为置换检验与 BH-FDR 校正后结果）";
       tr.addEventListener("click", () => {
         btViewKey = k;
         renderBtTable();
@@ -2136,21 +2531,27 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
       });
       tbody.appendChild(tr);
     });
-    $("#btMeta").textContent = `最近 ${BT_N} 期 · 每期 1 注 · 成本 ¥2/注 · 合计 ¥${BT_N * BT_COST}`;
+    $("#btMeta").textContent =
+      `${btWindowLabel()} · 每期 1 注 · 成本 ¥2/注 · 合计 ¥${BT_N * BT_COST} · ` +
+      `8 项检验 BH-FDR 校正（Bonferroni α=${BT_BONFERRONI.toFixed(5)}）`;
   }
 
   function renderBtDetail(){
     if (!btResults) return;
+    ensureBtStats();
     const r = btResults[btViewKey];
     if (!r) return;
+    const s = r.stat;
     const redDiff = r.red.mean - BT_RED_EXPECT;
     const blueDiff = (r.blueP - BT_BLUE_EXPECT) * 100;
-    $("#btCurrent").textContent = "回测详情 · " + r.label;
+    $("#btCurrent").textContent = "回测详情 · " + r.label + ` · ${btWindowLabel()}`;
     $("#btRed").textContent = r.red.mean.toFixed(2);
-    $("#btRedCi").textContent = `95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}`;
+    $("#btRedCi").textContent = `Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}`;
     $("#btBlue").textContent = (r.blueP * 100).toFixed(2) + "%";
     $("#btBlueCi").textContent = `95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%`;
     $("#btGap").textContent = `红 ${signed(redDiff, 2)} · 蓝 ${signed(blueDiff, 1)}pp`;
+    $("#btPower").textContent =
+      `MDE ±${s.mde.red.toFixed(2)} 红 / ±${(s.mde.blue * 100).toFixed(1)}pp 蓝（80% 把握度）`;
 
     const bars = $("#btBars");
     bars.innerHTML = "";
@@ -2171,17 +2572,28 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
 
   function renderBtVerdict(){
     if (!btResults) return;
-    const flat = BT_KEYS.filter(k => btResults[k].redSig === "flat" && btResults[k].blueSig === "flat").length;
-    const off = BT_KEYS.length - flat;
+    ensureBtStats();
+    const sigCount = BT_KEYS.filter(k => btResults[k].stat.sigRed || btResults[k].stat.sigBlue).length;
     const r = btResults[btViewKey];
-    const head = off === 0
-      ? `四种策略的红球均值与蓝球命中率，95% 置信区间<b>全部覆盖随机期望</b>。${BT_N} 期里没有哪种策略表现出统计显著的预测力。`
-      : `${BT_KEYS.length} 种策略中有 <b>${off} 种</b>至少一项指标落在随机区间外。单次回测里这可能是抽样波动，不能直接当成预测力。`;
+    const s = r.stat;
+    const pureBlueP = btResults.pure.stat.blueP;
+    const head = sigCount === 0
+      ? `在 ${btWindowLabel()} 的样本上，8 项检验经 BH-FDR 校正后<b>全部不显著</b>（q ≥ 0.05）。` +
+        `本样本里没有哪种策略表现出可辨识的预测力；但「不显著」也受样本量制约——` +
+        `本窗口最小可检出效应约为红 ±${s.mde.red.toFixed(2)} 个 / 蓝 ±${(s.mde.blue * 100).toFixed(1)}pp（80% 把握度）。`
+      : `${BT_KEYS.length} 种策略中有 <b>${sigCount} 种</b>在 BH-FDR 校正后仍至少一项显著（q < 0.05）。` +
+        `未经校正时 8 次 95% 检验的家族错误率约 1−0.95⁸ ≈ 34%，因此这里只认校正后的结果。`;
     const detail =
-      `查看中：<b>${r.label}</b>。红球 ${r.red.mean.toFixed(2)} 个（95% CI ${r.red.lo.toFixed(2)}–${r.red.hi.toFixed(2)}，${sigLabel(r.redSig)}），` +
-      `蓝球 ${(r.blueP * 100).toFixed(2)}%（95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%，${sigLabel(r.blueSig)}）。` +
+      `查看中：<b>${r.label}</b>。红球 ${r.red.mean.toFixed(2)} 个（Bootstrap 95% CI ${s.redBoot.lo.toFixed(2)}–${s.redBoot.hi.toFixed(2)}，` +
+      `置换检验 p=${s.redP.toFixed(3)}，BH q=${s.qRed.toFixed(3)}，${s.sigRed ? "校正后显著" : "校正后不显著"}），` +
+      `蓝球 ${(r.blueP * 100).toFixed(2)}%（95% CI ${(r.blueCi[0] * 100).toFixed(1)}–${(r.blueCi[1] * 100).toFixed(1)}%，` +
+      `p=${s.blueP.toFixed(3)}，q=${s.qBlue.toFixed(3)}，${s.sigBlue ? "校正后显著" : "校正后不显著"}）。` +
       `最高 ${r.best} 红，蓝球命中 ${r.blueHits} 次；固定奖回收 ¥${r.fixed} / 成本 ¥${r.cost}（${r.recovery.toFixed(1)}%）。`;
-    $("#verdict").innerHTML = head + `<br><br>` + detail + `<br><br>` +
+    const control =
+      `检验口径：红球 p 值以「纯随机构造」的命中分布为零假设做随机化/置换（故其自身恒为 p=1，仅作参照）；` +
+      `蓝球 p 值用理论随机率 1/16 的二项随机抽样。纯随机对照自身蓝球 p=${pureBlueP.toFixed(3)}；` +
+      `Bonferroni 单次阈值 α/8=${BT_BONFERRONI.toFixed(5)}，本页采用功效更高的 BH-FDR。`;
+    $("#verdict").innerHTML = head + `<br><br>` + detail + `<br><br>` + control + `<br><br>` +
       `固定奖按三等 3,000、四等 200、五等 10、六等 5 元计算；一、二等奖为浮动奖，单独计数，不计入回收率。`;
   }
 
@@ -3844,6 +4256,25 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
     qty = Number(b.dataset.q);
   });
 
+  // 观感过滤开关
+  const shapeFilterEl = document.getElementById("shapeFilter");
+  if (shapeFilterEl) {
+    const SHAPE_HINT = {
+      on:  "已开启：尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。注意：C(33,6)=1,107,568 全等概率，过滤不改变中奖概率；因一二等奖均分，越贴近大众习惯期望奖金越低。",
+      off: "关闭时按策略权重直接抽样；开启时尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。C(33,6)=1,107,568 全等概率，过滤仅改变号码形状分布，不改变中奖概率；但因一二等奖均分，越贴近大众习惯期望奖金越低。"
+    };
+    const shapeHintEl = document.getElementById("shapeHint");
+    const syncShapeHint = () => {
+      if (shapeHintEl) shapeHintEl.textContent = shapeFilterEl.checked ? SHAPE_HINT.on : SHAPE_HINT.off;
+    };
+    shapeFilterEl.checked = shapeFilterOn;
+    syncShapeHint();   // 首次载入（localStorage 可能已记住「开」）时也要让文案与开关一致
+    shapeFilterEl.addEventListener("change", () => {
+      setShapeFilter(shapeFilterEl.checked);
+      syncShapeHint();
+    });
+  }
+
   $("#btnGen").addEventListener("click", roll);
   $("#btnSave").addEventListener("click", saveRoll);
   $("#btnQuery").addEventListener("click", runQuery);
@@ -3854,6 +4285,19 @@ window.SSQ_RAW = "2026134|2026-11-22|04,05,10,17,21,32|08;2026133|2026-11-19|07,
   });
   $("#qInput").addEventListener("keydown", e => { if (e.key === "Enter") runQuery(); });
   $("#btnBacktest").addEventListener("click", backtest);
+  // P0-2：120 / 500 / 全部 窗口切换。只改窗口状态后复用现有 backtest()，不触碰 stepOnce()。
+  document.querySelectorAll("#btWindow button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if ($("#btnBacktest").disabled){ flashNote("回测进行中，请稍候再切换窗口"); return; }
+      const w = btn.dataset.w;
+      btWindow = w;
+      BT_N = w === "all" ? Math.max(1, N - 1) : Math.min(Number(w), N - 1);
+      document.querySelectorAll("#btWindow button").forEach(b => b.classList.toggle("on", b === btn));
+      btResults = null;
+      updateBtWindowTip();
+      backtest();
+    });
+  });
   $("#btnEvolve").addEventListener("click", runEvolution);
   $("#btnEvoCopy").addEventListener("click", () => {
     if (!evoResult) return;

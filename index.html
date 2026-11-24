@@ -278,6 +278,17 @@
   .strat.on .nm{color:#FFD8D4}
   .strat.on .ds{color:var(--muted)}
 
+  .shape-opt{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+  .shape-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--sans);font-size:12px;color:var(--paper-dim);line-height:1.4}
+  .shape-toggle input{position:absolute;opacity:0;width:0;height:0}
+  .shape-toggle .track{position:relative;width:38px;height:20px;background:var(--line-2);border-radius:10px;flex-shrink:0;transition:background .2s}
+  .shape-toggle .track i{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+  .shape-toggle input:checked + .track{background:var(--red-lit)}
+  .shape-toggle input:checked + .track i{transform:translateX(18px)}
+  .shape-toggle .txt{font-weight:500}
+  .shape-toggle .txt em{font-style:normal;color:var(--dim);font-weight:400;font-size:11px;margin-left:4px}
+  .shape-hint{margin-top:8px;font-family:var(--sans);font-size:11px;color:var(--dim);line-height:1.6}
+
   .gauge{margin-top:auto;padding-top:22px;border-top:1px solid var(--line)}
   .gauge-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
   .gauge-track{height:3px;background:var(--line);position:relative;overflow:hidden;margin-bottom:14px}
@@ -1103,6 +1114,15 @@
           </button>
         </div>
 
+        <div class="shape-opt">
+          <label class="shape-toggle" title="双色球一、二等奖为均分奖：中奖注数越多，单注奖金越低。观感过滤会把号码推向大众也爱选的形状（和值居中、奇偶均衡、三区全有），虽然中奖概率不变，但期望奖金下降。建议默认关闭。">
+            <input type="checkbox" id="shapeFilter" autocomplete="off">
+            <span class="track"><i></i></span>
+            <span class="txt">观感过滤 <em>默认关闭</em></span>
+          </label>
+          <p class="shape-hint" id="shapeHint">关闭时按策略权重直接抽样；开启时尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。C(33,6)=1,107,568 全等概率，过滤仅改变号码形状分布，不改变中奖概率；但因一二等奖均分，越贴近大众习惯期望奖金越低。</p>
+        </div>
+
         <div class="gauge">
           <div class="gauge-row"><span>样本池</span><span id="poolTxt">全量</span></div>
           <div class="gauge-track"><div class="gauge-fill" id="gaugeFill" style="width:100%"></div></div>
@@ -1382,6 +1402,20 @@
 
   let curStrat = "hot";
 
+  /* 观感过滤（结构约束）：默认关闭。
+   * 一、二等奖为均分奖：中奖注数越多，单注奖金越低。
+   * 观感过滤把号码推向大众也爱选的形状（和值居中、奇偶均衡、三区全有），
+   * 虽然中奖概率不变（C(33,6)=1,107,568 注等概率），但期望奖金下降。
+   * 实测：仅 54.2% 的组合通过过滤，45.8% 被排除。
+   */
+  const SHAPE_KEY = "ssq.shapeFilter";
+  let shapeFilterOn = false;
+  try { shapeFilterOn = localStorage.getItem(SHAPE_KEY) === "1"; } catch(e) {}
+  function setShapeFilter(on){
+    shapeFilterOn = !!on;
+    try { localStorage.setItem(SHAPE_KEY, shapeFilterOn ? "1" : "0"); } catch(e) {}
+  }
+
   function buildWeights(sc, cfg, range, jitterFn){
     const w = {};
     for (const x of range){
@@ -1394,8 +1428,12 @@
     return w;
   }
 
-  /* 结构约束：避免全偶/全奇、和值极偏、某一区完全空缺的"畸形注" */
+  /* 结构约束（观感过滤）：避免全偶/全奇、和值极偏、某一区完全空缺的"畸形注"。
+   * 默认关闭——C(33,6)=1,107,568 注全等概率，过滤不改变中奖概率；
+   * 但一、二等奖均分，越贴近大众选号习惯（观感越"正常"），期望奖金越低。
+   */
   function okShape(red){
+    if (!shapeFilterOn) return true;  // 观感过滤默认关闭：不做任何结构约束
     const sum = red.reduce((a, b) => a + b, 0);
     const odd = red.filter(x => x % 2 === 1).length;
     const big = red.filter(x => x >= 17).length;
@@ -4212,6 +4250,25 @@
     b.classList.add("on");
     qty = Number(b.dataset.q);
   });
+
+  // 观感过滤开关
+  const shapeFilterEl = document.getElementById("shapeFilter");
+  if (shapeFilterEl) {
+    const SHAPE_HINT = {
+      on:  "已开启：尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。注意：C(33,6)=1,107,568 全等概率，过滤不改变中奖概率；因一二等奖均分，越贴近大众习惯期望奖金越低。",
+      off: "关闭时按策略权重直接抽样；开启时尝试 40 次命中结构约束（奇偶 2:4、大小 2:4、三区全有、和值 72-128），若均失败则返回首个结果。C(33,6)=1,107,568 全等概率，过滤仅改变号码形状分布，不改变中奖概率；但因一二等奖均分，越贴近大众习惯期望奖金越低。"
+    };
+    const shapeHintEl = document.getElementById("shapeHint");
+    const syncShapeHint = () => {
+      if (shapeHintEl) shapeHintEl.textContent = shapeFilterEl.checked ? SHAPE_HINT.on : SHAPE_HINT.off;
+    };
+    shapeFilterEl.checked = shapeFilterOn;
+    syncShapeHint();   // 首次载入（localStorage 可能已记住「开」）时也要让文案与开关一致
+    shapeFilterEl.addEventListener("change", () => {
+      setShapeFilter(shapeFilterEl.checked);
+      syncShapeHint();
+    });
+  }
 
   $("#btnGen").addEventListener("click", roll);
   $("#btnSave").addEventListener("click", saveRoll);
